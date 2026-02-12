@@ -12,8 +12,7 @@ defmodule Greenlight.Application do
       GreenlightWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:greenlight, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Greenlight.PubSub},
-      # Start a worker by calling: Greenlight.Worker.start_link(arg)
-      # {Greenlight.Worker, arg},
+      {DynamicSupervisor, name: Greenlight.PollerSupervisor, strategy: :one_for_one},
       # Start to serve requests, typically the last entry
       GreenlightWeb.Endpoint
     ]

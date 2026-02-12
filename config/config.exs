@@ -50,6 +50,11 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :greenlight,
+  github_token: System.get_env("GITHUB_TOKEN"),
+  bookmarked_repos: [],
+  followed_orgs: []
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
