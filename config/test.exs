@@ -19,6 +19,9 @@ config :logger, level: :warning
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
+# Set a dummy GitHub token for tests (API calls are stubbed via Req.Test)
+config :greenlight, github_token: "test-token"
+
 # Enable helpful, but potentially expensive runtime checks
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true
