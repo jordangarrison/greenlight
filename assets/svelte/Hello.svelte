@@ -1,5 +1,5 @@
 <script>
-  export let name = "World"
+  let { name = "World" } = $props()
 </script>
 
 <p>Hello {name} from Svelte!</p>

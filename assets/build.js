@@ -1,7 +1,6 @@
 const esbuild = require("esbuild")
 const sveltePlugin = require("esbuild-svelte")
 const importGlobPlugin = require("esbuild-plugin-import-glob").default
-const sveltePreprocess = require("svelte-preprocess")
 
 const path = require("path")
 
@@ -36,8 +35,7 @@ let optsClient = {
     plugins: [
         importGlobPlugin(),
         sveltePlugin({
-            preprocess: sveltePreprocess(),
-            compilerOptions: {dev: !deploy, css: "injected", generate: "client"},
+            compilerOptions: {dev: !deploy, css: "injected", generate: "client", runes: true},
         }),
     ],
 }
@@ -58,8 +56,7 @@ let optsServer = {
     plugins: [
         importGlobPlugin(),
         sveltePlugin({
-            preprocess: sveltePreprocess(),
-            compilerOptions: {dev: !deploy, css: "injected", generate: "server"},
+            compilerOptions: {dev: !deploy, css: "injected", generate: "server", runes: true},
         }),
     ],
 }
