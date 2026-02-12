@@ -6,8 +6,14 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
@@ -25,16 +31,18 @@
 
             # Asset pipeline - provide system binaries so Phoenix
             # doesn't download its own (which won't work on NixOS)
-            pkgs.esbuild
             pkgs.tailwindcss_4
+
+            # Node.js for LiveSvelte build pipeline
+            pkgs.nodejs
 
             # File watching for live reload
             pkgs.inotify-tools
+            pkgs.watchman
           ];
 
           env = {
-            # Tell Phoenix to use system esbuild/tailwind instead of downloading
-            MIX_ESBUILD_PATH = "${pkgs.esbuild}/bin/esbuild";
+            # Tell Phoenix to use system tailwind instead of downloading
             MIX_TAILWIND_PATH = "${pkgs.tailwindcss_4}/bin/tailwindcss";
 
             # Locale settings for Elixir
@@ -47,5 +55,6 @@
             mix local.rebar --if-missing --force
           '';
         };
-      });
+      }
+    );
 }
