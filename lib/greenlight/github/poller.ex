@@ -46,9 +46,10 @@ defmodule Greenlight.GitHub.Poller do
   def handle_call({:subscribe, pid}, _from, state) do
     mon_ref = Process.monitor(pid)
 
-    state = %{state |
-      monitors: Map.put(state.monitors, mon_ref, pid),
-      subscriber_count: state.subscriber_count + 1
+    state = %{
+      state
+      | monitors: Map.put(state.monitors, mon_ref, pid),
+        subscriber_count: state.subscriber_count + 1
     }
 
     reply = state.last_state
@@ -64,9 +65,10 @@ defmodule Greenlight.GitHub.Poller do
 
   @impl true
   def handle_info({:DOWN, mon_ref, :process, _pid, _reason}, state) do
-    state = %{state |
-      monitors: Map.delete(state.monitors, mon_ref),
-      subscriber_count: state.subscriber_count - 1
+    state = %{
+      state
+      | monitors: Map.delete(state.monitors, mon_ref),
+        subscriber_count: state.subscriber_count - 1
     }
 
     if state.subscriber_count <= 0 do

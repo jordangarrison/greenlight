@@ -8,15 +8,23 @@ defmodule Greenlight.GitHub.Client do
   @base_url "https://api.github.com"
 
   defp new do
-    Req.new(
+    opts = [
       base_url: @base_url,
       headers: [
         {"accept", "application/vnd.github+json"},
         {"authorization", "Bearer #{Greenlight.Config.github_token()}"},
         {"x-github-api-version", "2022-11-28"}
-      ],
-      plug: {Req.Test, __MODULE__}
-    )
+      ]
+    ]
+
+    opts =
+      if Application.get_env(:greenlight, :req_test_mode) do
+        Keyword.put(opts, :plug, {Req.Test, __MODULE__})
+      else
+        opts
+      end
+
+    Req.new(opts)
   end
 
   def list_workflow_runs(owner, repo, opts \\ []) do
@@ -64,7 +72,10 @@ defmodule Greenlight.GitHub.Client do
   end
 
   def list_pulls(owner, repo) do
-    case Req.get(new(), url: "/repos/#{owner}/#{repo}/pulls", params: %{state: "open", per_page: 30}) do
+    case Req.get(new(),
+           url: "/repos/#{owner}/#{repo}/pulls",
+           params: %{state: "open", per_page: 30}
+         ) do
       {:ok, %{status: 200, body: body}} ->
         pulls =
           Enum.map(body, fn pr ->

@@ -11,9 +11,13 @@ defmodule Greenlight.GitHub.PollerTest do
           Req.Test.json(conn, %{
             "workflow_runs" => [
               %{
-                "id" => 1, "name" => "CI", "workflow_id" => 10,
-                "status" => "completed", "conclusion" => "success",
-                "head_sha" => "abc123", "event" => "push",
+                "id" => 1,
+                "name" => "CI",
+                "workflow_id" => 10,
+                "status" => "completed",
+                "conclusion" => "success",
+                "head_sha" => "abc123",
+                "event" => "push",
                 "html_url" => "https://github.com/owner/repo/actions/runs/1",
                 "created_at" => "2026-02-12T10:00:00Z",
                 "updated_at" => "2026-02-12T10:05:00Z"
@@ -25,8 +29,10 @@ defmodule Greenlight.GitHub.PollerTest do
           Req.Test.json(conn, %{
             "jobs" => [
               %{
-                "id" => 100, "name" => "build",
-                "status" => "completed", "conclusion" => "success",
+                "id" => 100,
+                "name" => "build",
+                "status" => "completed",
+                "conclusion" => "success",
                 "started_at" => "2026-02-12T10:00:00Z",
                 "completed_at" => "2026-02-12T10:02:00Z",
                 "html_url" => "https://github.com/owner/repo/actions/runs/1/job/100",
@@ -46,8 +52,11 @@ defmodule Greenlight.GitHub.PollerTest do
     # Start without initial poll so we can set up Req.Test.allow first
     {:ok, pid} =
       Poller.start_link(
-        owner: "owner", repo: "repo", ref: "abc123",
-        poll_interval: 100, skip_initial_poll: true
+        owner: "owner",
+        repo: "repo",
+        ref: "abc123",
+        poll_interval: 100,
+        skip_initial_poll: true
       )
 
     on_exit(fn ->

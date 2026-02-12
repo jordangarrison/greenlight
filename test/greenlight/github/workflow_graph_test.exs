@@ -8,8 +8,13 @@ defmodule Greenlight.GitHub.WorkflowGraphTest do
     test "converts workflow runs to Svelte Flow nodes and edges" do
       runs = [
         %Models.WorkflowRun{
-          id: 1, name: "CI", workflow_id: 10, status: :completed,
-          conclusion: :success, head_sha: "abc", event: "push",
+          id: 1,
+          name: "CI",
+          workflow_id: 10,
+          status: :completed,
+          conclusion: :success,
+          head_sha: "abc",
+          event: "push",
           html_url: "https://github.com/o/r/actions/runs/1",
           created_at: ~U[2026-02-12 10:00:00Z],
           updated_at: ~U[2026-02-12 10:05:00Z],
@@ -19,8 +24,13 @@ defmodule Greenlight.GitHub.WorkflowGraphTest do
           ]
         },
         %Models.WorkflowRun{
-          id: 2, name: "Deploy", workflow_id: 20, status: :queued,
-          conclusion: nil, head_sha: "abc", event: "workflow_run",
+          id: 2,
+          name: "Deploy",
+          workflow_id: 20,
+          status: :queued,
+          conclusion: nil,
+          head_sha: "abc",
+          event: "workflow_run",
           html_url: "https://github.com/o/r/actions/runs/2",
           created_at: ~U[2026-02-12 10:05:00Z],
           updated_at: ~U[2026-02-12 10:05:00Z],
@@ -44,28 +54,42 @@ defmodule Greenlight.GitHub.WorkflowGraphTest do
     test "converts jobs to Svelte Flow nodes and edges using needs" do
       jobs = [
         %Models.Job{
-          id: 100, name: "build", status: :completed, conclusion: :success,
+          id: 100,
+          name: "build",
+          status: :completed,
+          conclusion: :success,
           html_url: "https://github.com/o/r/actions/runs/1/job/100",
           started_at: ~U[2026-02-12 10:00:00Z],
           completed_at: ~U[2026-02-12 10:02:00Z],
-          current_step: nil, steps: [], needs: []
+          current_step: nil,
+          steps: [],
+          needs: []
         },
         %Models.Job{
-          id: 101, name: "test", status: :in_progress, conclusion: nil,
+          id: 101,
+          name: "test",
+          status: :in_progress,
+          conclusion: nil,
           html_url: "https://github.com/o/r/actions/runs/1/job/101",
           started_at: ~U[2026-02-12 10:02:00Z],
           completed_at: nil,
-          current_step: "Run tests", steps: [
+          current_step: "Run tests",
+          steps: [
             %Models.Step{name: "Checkout", status: :completed, conclusion: :success, number: 1},
             %Models.Step{name: "Run tests", status: :in_progress, conclusion: nil, number: 2}
           ],
           needs: ["build"]
         },
         %Models.Job{
-          id: 102, name: "deploy", status: :queued, conclusion: nil,
+          id: 102,
+          name: "deploy",
+          status: :queued,
+          conclusion: nil,
           html_url: "https://github.com/o/r/actions/runs/1/job/102",
-          started_at: nil, completed_at: nil,
-          current_step: nil, steps: [],
+          started_at: nil,
+          completed_at: nil,
+          current_step: nil,
+          steps: [],
           needs: ["test"]
         }
       ]

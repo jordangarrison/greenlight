@@ -22,6 +22,9 @@ config :phoenix, :plug_init_mode, :runtime
 # Set a dummy GitHub token for tests (API calls are stubbed via Req.Test)
 config :greenlight, github_token: "test-token"
 
+# Enable Req.Test plug for stubbing HTTP calls in tests
+config :greenlight, req_test_mode: true
+
 # Enable helpful, but potentially expensive runtime checks
 config :phoenix_live_view,
   enable_expensive_runtime_checks: true

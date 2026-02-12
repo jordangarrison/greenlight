@@ -41,8 +41,18 @@ defmodule Greenlight.GitHub.Models do
 
   defmodule Job do
     @moduledoc false
-    defstruct [:id, :name, :status, :conclusion, :started_at, :completed_at,
-               :current_step, :html_url, steps: [], needs: []]
+    defstruct [
+      :id,
+      :name,
+      :status,
+      :conclusion,
+      :started_at,
+      :completed_at,
+      :current_step,
+      :html_url,
+      steps: [],
+      needs: []
+    ]
 
     def from_api(data) do
       steps = Enum.map(data["steps"] || [], &Step.from_api/1)
@@ -78,8 +88,19 @@ defmodule Greenlight.GitHub.Models do
 
   defmodule WorkflowRun do
     @moduledoc false
-    defstruct [:id, :name, :workflow_id, :status, :conclusion, :head_sha,
-               :event, :html_url, :created_at, :updated_at, jobs: []]
+    defstruct [
+      :id,
+      :name,
+      :workflow_id,
+      :status,
+      :conclusion,
+      :head_sha,
+      :event,
+      :html_url,
+      :created_at,
+      :updated_at,
+      jobs: []
+    ]
 
     def from_api(data) do
       %__MODULE__{

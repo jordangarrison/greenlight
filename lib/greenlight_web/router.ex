@@ -17,8 +17,12 @@ defmodule GreenlightWeb.Router do
   scope "/", GreenlightWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
-    live "/test", TestLive
+    live "/", DashboardLive
+    live "/dashboard", DashboardLive
+    live "/repos/:owner/:repo", RepoLive
+    live "/repos/:owner/:repo/commit/:sha", PipelineLive
+    live "/repos/:owner/:repo/pull/:number", PipelineLive
+    live "/repos/:owner/:repo/release/:tag", PipelineLive
   end
 
   # Other scopes may use custom stacks.
