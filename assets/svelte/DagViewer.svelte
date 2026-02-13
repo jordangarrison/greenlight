@@ -6,14 +6,116 @@
   import PipelineNode from './nodes/PipelineNode.svelte';
   import FitViewHelper from './FitViewHelper.svelte';
 
-
-  let { nodes = [], edges = [], view_level = "workflows", pipeline_label = "", pipeline_sublabel = "", live } = $props();
+  let { nodes = [], edges = [], workflow_runs = [], pipeline_label = "", pipeline_sublabel = "" } = $props();
 
   const nodeTypes = {
     workflow: WorkflowNode,
     job: JobNode,
     pipeline: PipelineNode
   };
+
+  let expandedWorkflows = $state(new Set());
+
+  function toggleWorkflow(runId) {
+    const next = new Set(expandedWorkflows);
+    if (next.has(runId)) {
+      next.delete(runId);
+    } else {
+      next.add(runId);
+    }
+    expandedWorkflows = next;
+  }
+
+  function buildJobNodesAndEdges(workflowRun) {
+    const wfNodeId = `wf-${workflowRun.id}`;
+    const jobs = workflowRun.jobs || [];
+
+    // Build name -> node ID lookup for resolving needs
+    const nameToId = {};
+    jobs.forEach(job => {
+      nameToId[job.name] = `job-${workflowRun.id}-${job.id}`;
+    });
+
+    const jobNodes = jobs.map(job => ({
+      id: `job-${workflowRun.id}-${job.id}`,
+      type: 'job',
+      position: { x: 0, y: 0 },
+      data: {
+        name: job.name,
+        status: job.status,
+        conclusion: job.conclusion,
+        elapsed: job.elapsed,
+        current_step: job.current_step,
+        steps_completed: job.steps_completed,
+        steps_total: job.steps_total,
+        html_url: job.html_url
+      }
+    }));
+
+    // Edges: job dependencies from `needs`
+    const jobEdges = [];
+    jobs.forEach(job => {
+      const targetId = nameToId[job.name];
+      if (job.needs && job.needs.length > 0) {
+        job.needs.forEach(neededName => {
+          const sourceId = nameToId[neededName];
+          if (sourceId) {
+            jobEdges.push({
+              id: `e-${sourceId}-${targetId}`,
+              source: sourceId,
+              target: targetId,
+              animated: job.status === 'in_progress',
+              data: { type: 'job-dep' }
+            });
+          }
+        });
+      }
+    });
+
+    // Connector edges: workflow -> root jobs (jobs with no needs or needs outside this workflow)
+    const rootJobs = jobs.filter(job => !job.needs || job.needs.length === 0 ||
+      job.needs.every(n => !nameToId[n]));
+    const connectorEdges = rootJobs.map(job => ({
+      id: `e-${wfNodeId}-job-${workflowRun.id}-${job.id}`,
+      source: wfNodeId,
+      target: `job-${workflowRun.id}-${job.id}`,
+      animated: job.status === 'in_progress',
+      data: { type: 'wf-job-connector' }
+    }));
+
+    return {
+      nodes: jobNodes,
+      edges: [...connectorEdges, ...jobEdges]
+    };
+  }
+
+  // Mark workflow nodes with expanded state
+  const workflowNodesWithExpanded = $derived(
+    nodes.map(n => {
+      if (n.type === 'workflow') {
+        const runId = parseInt(n.id.replace('wf-', ''));
+        return { ...n, data: { ...n.data, expanded: expandedWorkflows.has(runId) } };
+      }
+      return n;
+    })
+  );
+
+  // Merge expanded job nodes/edges into the base graph
+  const mergedGraph = $derived.by(() => {
+    let allNodes = [...workflowNodesWithExpanded];
+    let allEdges = [...edges];
+
+    for (const runId of expandedWorkflows) {
+      const wfRun = workflow_runs.find(r => r.id === runId);
+      if (wfRun) {
+        const { nodes: jobNodes, edges: jobEdges } = buildJobNodesAndEdges(wfRun);
+        allNodes = [...allNodes, ...jobNodes];
+        allEdges = [...allEdges, ...jobEdges];
+      }
+    }
+
+    return { nodes: allNodes, edges: allEdges };
+  });
 
   function addRootNode(inputNodes, inputEdges) {
     if (inputNodes.length === 0) return { nodes: inputNodes, edges: inputEdges };
@@ -49,11 +151,13 @@
 
     const nodeWidth = (node) => {
       if (node.type === 'pipeline') return 180;
-      return view_level === 'workflows' ? 240 : 220;
+      if (node.type === 'job') return 220;
+      return 240;
     };
     const nodeHeight = (node) => {
       if (node.type === 'pipeline') return 70;
-      return view_level === 'workflows' ? 110 : 100;
+      if (node.type === 'job') return 100;
+      return 110;
     };
 
     inputNodes.forEach(node => {
@@ -83,41 +187,39 @@
     });
   }
 
-  const withRoot = $derived(addRootNode(nodes, edges));
+  const withRoot = $derived(addRootNode(mergedGraph.nodes, mergedGraph.edges));
   const layoutedNodes = $derived(getLayoutedElements(withRoot.nodes, withRoot.edges));
 
-  const styledEdges = $derived(withRoot.edges.map(edge => ({
-    ...edge,
-    style: `stroke: var(--gl-border-strong); stroke-width: 2px;`,
-    animated: edge.animated || false
-  })));
+  const styledEdges = $derived(withRoot.edges.map(edge => {
+    const isConnector = edge.data?.type === 'wf-job-connector';
+    const isJobDep = edge.data?.type === 'job-dep';
+
+    let style = `stroke: var(--gl-border-strong); stroke-width: 2px;`;
+    if (isConnector) {
+      style = `stroke: var(--gl-accent); stroke-width: 2px; stroke-dasharray: 6 3;`;
+    } else if (isJobDep) {
+      style = `stroke: var(--gl-border-strong); stroke-width: 1.5px;`;
+    }
+
+    return {
+      ...edge,
+      style,
+      animated: edge.animated || false
+    };
+  }));
 
   function handleNodeClick(event) {
     const node = event.detail.node;
-    if (view_level === 'workflows' && node.type === 'workflow') {
-      live.pushEvent("node_clicked", {
-        workflow_run_id: parseInt(node.id.replace("wf-", "")),
-        workflow_name: node.data.name
-      });
+    if (node.type === 'workflow') {
+      const runId = parseInt(node.id.replace('wf-', ''));
+      toggleWorkflow(runId);
+    } else if (node.type === 'job' && node.data.html_url) {
+      window.open(node.data.html_url, '_blank');
     }
-  }
-
-  function handleBackClick() {
-    live.pushEvent("back_clicked", {});
   }
 </script>
 
 <div class="w-full h-[calc(100vh-200px)] min-h-[400px] relative overflow-hidden" style="background: var(--gl-bg-primary);">
-  {#if view_level === 'jobs'}
-    <button
-      onclick={handleBackClick}
-      class="absolute top-3 left-3 z-10 px-4 py-2 text-sm font-bold uppercase tracking-wider nb-btn cursor-pointer"
-      style="background: var(--gl-bg-raised); color: var(--gl-accent); border: 2px solid var(--gl-accent); font-family: var(--gl-font-mono);"
-    >
-      &larr; Workflows
-    </button>
-  {/if}
-
   <SvelteFlow
     nodes={layoutedNodes}
     edges={styledEdges}
