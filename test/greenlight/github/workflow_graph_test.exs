@@ -105,4 +105,65 @@ defmodule Greenlight.GitHub.WorkflowGraphTest do
       assert test_node.data.steps_total == 2
     end
   end
+
+  describe "serialize_workflow_runs/1" do
+    test "serializes workflow runs with job data for client" do
+      runs = [
+        %Models.WorkflowRun{
+          id: 1,
+          name: "CI",
+          workflow_id: 10,
+          status: :completed,
+          conclusion: :success,
+          head_sha: "abc",
+          event: "push",
+          html_url: "https://github.com/o/r/actions/runs/1",
+          created_at: ~U[2026-02-12 10:00:00Z],
+          updated_at: ~U[2026-02-12 10:05:00Z],
+          jobs: [
+            %Models.Job{
+              id: 100,
+              name: "build",
+              status: :completed,
+              conclusion: :success,
+              html_url: "https://github.com/o/r/actions/runs/1/job/100",
+              started_at: ~U[2026-02-12 10:00:00Z],
+              completed_at: ~U[2026-02-12 10:02:00Z],
+              steps: [],
+              needs: []
+            },
+            %Models.Job{
+              id: 101,
+              name: "test",
+              status: :completed,
+              conclusion: :success,
+              html_url: "https://github.com/o/r/actions/runs/1/job/101",
+              started_at: ~U[2026-02-12 10:02:00Z],
+              completed_at: ~U[2026-02-12 10:04:00Z],
+              steps: [
+                %Models.Step{
+                  name: "Checkout",
+                  status: :completed,
+                  conclusion: :success,
+                  number: 1
+                }
+              ],
+              needs: ["build"]
+            }
+          ]
+        }
+      ]
+
+      [serialized] = WorkflowGraph.serialize_workflow_runs(runs)
+
+      assert serialized.id == 1
+      assert length(serialized.jobs) == 2
+
+      test_job = Enum.find(serialized.jobs, &(&1.name == "test"))
+      assert test_job.needs == ["build"]
+      assert test_job.steps_completed == 1
+      assert test_job.steps_total == 1
+      assert test_job.status == "completed"
+    end
+  end
 end

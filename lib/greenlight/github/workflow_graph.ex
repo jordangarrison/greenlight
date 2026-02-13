@@ -105,4 +105,38 @@ defmodule Greenlight.GitHub.WorkflowGraph do
       }
     }
   end
+
+  def serialize_workflow_runs(workflow_runs) do
+    Enum.map(workflow_runs, fn run ->
+      %{
+        id: run.id,
+        jobs:
+          Enum.map(run.jobs, fn job ->
+            steps_completed = Enum.count(job.steps, &(&1.status == :completed))
+            steps_total = length(job.steps)
+
+            elapsed =
+              if job.started_at do
+                end_time = job.completed_at || DateTime.utc_now()
+                DateTime.diff(end_time, job.started_at, :second)
+              else
+                0
+              end
+
+            %{
+              id: job.id,
+              name: job.name,
+              status: to_string(job.status),
+              conclusion: job.conclusion && to_string(job.conclusion),
+              elapsed: elapsed,
+              current_step: job.current_step,
+              steps_completed: steps_completed,
+              steps_total: steps_total,
+              html_url: job.html_url,
+              needs: job.needs || []
+            }
+          end)
+      }
+    end)
+  end
 end
