@@ -15,15 +15,31 @@
     e.stopPropagation();
     window.open(data.html_url, '_blank');
   }
+
+  const borderColor = $derived(
+    data.conclusion === 'failure' ? 'var(--gl-status-error)' :
+    data.status === 'in_progress' ? 'var(--gl-status-warning)' :
+    data.conclusion === 'success' ? 'var(--gl-status-success)' :
+    'var(--gl-border)'
+  );
+
+  const shadowColor = $derived(
+    data.conclusion === 'failure' ? 'var(--gl-status-error)' :
+    data.status === 'in_progress' ? 'var(--gl-status-warning)' :
+    data.conclusion === 'success' ? 'var(--gl-status-success)' :
+    'var(--gl-border)'
+  );
 </script>
 
 <Handle type="target" position={Position.Top} />
 
-<div class="px-4 py-3 rounded-lg border-2 bg-white dark:bg-gray-800 shadow-md min-w-[200px]
-  {data.conclusion === 'failure' ? 'border-red-400' : data.status === 'in_progress' ? 'border-amber-400' : data.conclusion === 'success' ? 'border-green-400' : 'border-gray-300'}">
-  <div class="flex items-center justify-between gap-2 mb-1">
-    <span class="font-semibold text-sm truncate">{data.name}</span>
-    <button onclick={openGitHub} class="text-gray-400 hover:text-blue-500 transition-colors" title="View on GitHub">
+<div
+  class="px-4 py-3 min-w-[220px] cursor-pointer transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5"
+  style="background: var(--gl-bg-raised); border: 2px solid {borderColor}; border-left: 4px solid {borderColor}; box-shadow: 3px 3px 0px {shadowColor}; font-family: var(--gl-font-mono);"
+>
+  <div class="flex items-center justify-between gap-2 mb-2">
+    <span class="font-bold text-sm truncate text-white">{data.name}</span>
+    <button onclick={openGitHub} class="opacity-40 hover:opacity-100 transition-opacity text-[var(--gl-accent)]" title="View on GitHub">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
       </svg>
@@ -31,10 +47,12 @@
   </div>
   <div class="flex items-center justify-between gap-3">
     <StatusBadge status={data.status} conclusion={data.conclusion} />
-    <span class="text-xs text-gray-500">{formatElapsed(data.elapsed)}</span>
+    <span class="text-xs text-[var(--gl-text-muted)]">{formatElapsed(data.elapsed)}</span>
   </div>
   {#if data.jobs_total > 0}
-    <div class="text-xs text-gray-500 mt-1">{data.jobs_passed}/{data.jobs_total} jobs passed</div>
+    <div class="text-xs text-[var(--gl-text-muted)] mt-2">
+      {data.jobs_passed}/{data.jobs_total} jobs
+    </div>
   {/if}
 </div>
 
