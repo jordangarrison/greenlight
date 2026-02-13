@@ -33,8 +33,10 @@ defmodule GreenlightWeb.CoreComponents do
       <div class={[
         "w-80 sm:w-96 p-4 border-2 text-sm",
         "font-[var(--gl-font-mono)]",
-        @kind == :info && "bg-[var(--gl-bg-raised)] border-[var(--gl-accent)] text-[var(--gl-accent)] border-l-4",
-        @kind == :error && "bg-[var(--gl-bg-raised)] border-[var(--gl-status-error)] text-[var(--gl-status-error)] border-l-4"
+        @kind == :info &&
+          "bg-[var(--gl-bg-raised)] border-[var(--gl-accent)] text-[var(--gl-accent)] border-l-4",
+        @kind == :error &&
+          "bg-[var(--gl-bg-raised)] border-[var(--gl-status-error)] text-[var(--gl-status-error)] border-l-4"
       ]}>
         <div class="flex items-start gap-3">
           <.icon :if={@kind == :info} name="hero-information-circle" class="size-5 shrink-0" />
@@ -103,8 +105,7 @@ defmodule GreenlightWeb.CoreComponents do
 
   attr :type, :string,
     default: "text",
-    values:
-      ~w(checkbox color date datetime-local email file month number password
+    values: ~w(checkbox color date datetime-local email file month number password
                search select tel text textarea time url week hidden)
 
   attr :field, Phoenix.HTML.FormField,
@@ -119,8 +120,7 @@ defmodule GreenlightWeb.CoreComponents do
   attr :error_class, :any, default: nil, doc: "the input error class to use over defaults"
 
   attr :rest, :global,
-    include:
-      ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
+    include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
                 multiple pattern placeholder readonly required rows size step)
 
   def input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
@@ -164,7 +164,10 @@ defmodule GreenlightWeb.CoreComponents do
           name={@name}
           value="true"
           checked={@checked}
-          class={@class || "w-5 h-5 accent-[var(--gl-accent)] bg-[var(--gl-bg-raised)] border-2 border-[var(--gl-border)]"}
+          class={
+            @class ||
+              "w-5 h-5 accent-[var(--gl-accent)] bg-[var(--gl-bg-raised)] border-2 border-[var(--gl-border)]"
+          }
           {@rest}
         />
         <span class="text-sm text-[var(--gl-text-body)] uppercase tracking-wider">{@label}</span>
@@ -178,7 +181,10 @@ defmodule GreenlightWeb.CoreComponents do
     ~H"""
     <div class="mb-3">
       <label>
-        <span :if={@label} class="block text-xs text-[var(--gl-text-muted)] uppercase tracking-wider mb-1">
+        <span
+          :if={@label}
+          class="block text-xs text-[var(--gl-text-muted)] uppercase tracking-wider mb-1"
+        >
           {@label}
         </span>
         <select
@@ -205,7 +211,10 @@ defmodule GreenlightWeb.CoreComponents do
     ~H"""
     <div class="mb-3">
       <label>
-        <span :if={@label} class="block text-xs text-[var(--gl-text-muted)] uppercase tracking-wider mb-1">
+        <span
+          :if={@label}
+          class="block text-xs text-[var(--gl-text-muted)] uppercase tracking-wider mb-1"
+        >
           {@label}
         </span>
         <textarea
@@ -228,7 +237,10 @@ defmodule GreenlightWeb.CoreComponents do
     ~H"""
     <div class="mb-3">
       <label>
-        <span :if={@label} class="block text-xs text-[var(--gl-text-muted)] uppercase tracking-wider mb-1">
+        <span
+          :if={@label}
+          class="block text-xs text-[var(--gl-text-muted)] uppercase tracking-wider mb-1"
+        >
           {@label}
         </span>
         <input

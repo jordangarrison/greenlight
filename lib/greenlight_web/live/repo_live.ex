@@ -110,7 +110,10 @@ defmodule GreenlightWeb.RepoLive do
           </button>
         </div>
 
-        <div :if={@loading} class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider">
+        <div
+          :if={@loading}
+          class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider"
+        >
           <.icon name="hero-arrow-path" class="size-5 motion-safe:animate-spin inline mr-2" />
           Loading...
         </div>
@@ -126,20 +129,27 @@ defmodule GreenlightWeb.RepoLive do
                 <span class="font-bold text-white text-sm" style="font-family: var(--gl-font-mono);">
                   {String.slice(run.head_sha, 0, 7)}
                 </span>
-                <span class={[
-                  "text-xs px-3 py-1 font-bold uppercase tracking-wider border",
-                  status_badge_class(run.status, run.conclusion)
-                ]}
-                style="font-family: var(--gl-font-mono);"
+                <span
+                  class={[
+                    "text-xs px-3 py-1 font-bold uppercase tracking-wider border",
+                    status_badge_class(run.status, run.conclusion)
+                  ]}
+                  style="font-family: var(--gl-font-mono);"
                 >
                   {run.conclusion || run.status}
                 </span>
               </div>
-              <div class="text-sm text-[var(--gl-text-muted)] mt-2" style="font-family: var(--gl-font-mono);">
+              <div
+                class="text-sm text-[var(--gl-text-muted)] mt-2"
+                style="font-family: var(--gl-font-mono);"
+              >
                 {run.name}
               </div>
             </.link>
-            <div :if={@commits == []} class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider">
+            <div
+              :if={@commits == []}
+              class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider"
+            >
               No recent workflow runs
             </div>
           </div>
@@ -151,13 +161,19 @@ defmodule GreenlightWeb.RepoLive do
               class="nb-card block p-4"
             >
               <div class="flex items-center gap-3">
-                <span class="text-[var(--gl-text-muted)] text-sm" style="font-family: var(--gl-font-mono);">
+                <span
+                  class="text-[var(--gl-text-muted)] text-sm"
+                  style="font-family: var(--gl-font-mono);"
+                >
                   #{pr.number}
                 </span>
                 <span class="font-bold text-white text-sm">{pr.title}</span>
               </div>
             </.link>
-            <div :if={@pulls == []} class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider">
+            <div
+              :if={@pulls == []}
+              class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider"
+            >
               No open pull requests
             </div>
           </div>
@@ -172,7 +188,10 @@ defmodule GreenlightWeb.RepoLive do
                 {branch.name}
               </span>
             </.link>
-            <div :if={@branches == []} class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider">
+            <div
+              :if={@branches == []}
+              class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider"
+            >
               No branches
             </div>
           </div>
@@ -187,10 +206,15 @@ defmodule GreenlightWeb.RepoLive do
                 <span class="font-bold text-white text-sm" style="font-family: var(--gl-font-mono);">
                   {release.tag_name}
                 </span>
-                <span :if={release.name} class="text-sm text-[var(--gl-text-muted)]">{release.name}</span>
+                <span :if={release.name} class="text-sm text-[var(--gl-text-muted)]">
+                  {release.name}
+                </span>
               </div>
             </.link>
-            <div :if={@releases == []} class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider">
+            <div
+              :if={@releases == []}
+              class="text-center py-12 text-[var(--gl-text-muted)] uppercase tracking-wider"
+            >
               No releases
             </div>
           </div>

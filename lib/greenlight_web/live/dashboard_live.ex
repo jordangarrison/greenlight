@@ -61,8 +61,7 @@ defmodule GreenlightWeb.DashboardLive do
 
         <section :if={@bookmarked_repos != []} class="mb-12">
           <h2 class="text-lg font-bold uppercase tracking-wider text-[var(--gl-accent)] mb-6 flex items-center gap-2">
-            <span class="w-2 h-2 bg-[var(--gl-accent)]" />
-            Bookmarked Repos
+            <span class="w-2 h-2 bg-[var(--gl-accent)]" /> Bookmarked Repos
           </h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <.link
@@ -82,8 +81,7 @@ defmodule GreenlightWeb.DashboardLive do
 
         <section :if={@followed_orgs != []} class="mb-12">
           <h2 class="text-lg font-bold uppercase tracking-wider text-[var(--gl-accent)] mb-6 flex items-center gap-2">
-            <span class="w-2 h-2 bg-[var(--gl-accent)]" />
-            Organizations
+            <span class="w-2 h-2 bg-[var(--gl-accent)]" /> Organizations
           </h2>
           <div :for={org <- @followed_orgs} class="mb-4">
             <button
@@ -94,8 +92,13 @@ defmodule GreenlightWeb.DashboardLive do
               <span class="text-sm text-[var(--gl-accent)]" style="font-family: var(--gl-font-mono);">
                 {if MapSet.member?(@expanded_orgs, org), do: "[-]", else: "[+]"}
               </span>
-              <span class="font-bold text-white" style="font-family: var(--gl-font-mono);">{org}</span>
-              <span class="text-sm text-[var(--gl-text-muted)] ml-auto" style="font-family: var(--gl-font-mono);">
+              <span class="font-bold text-white" style="font-family: var(--gl-font-mono);">
+                {org}
+              </span>
+              <span
+                class="text-sm text-[var(--gl-text-muted)] ml-auto"
+                style="font-family: var(--gl-font-mono);"
+              >
                 {length(Map.get(@org_repos, org, []))} repos
               </span>
             </button>
@@ -106,7 +109,10 @@ defmodule GreenlightWeb.DashboardLive do
                 navigate={"/repos/#{repo}"}
                 class="nb-card-muted block p-3"
               >
-                <span class="text-sm text-[var(--gl-text-body)]" style="font-family: var(--gl-font-mono);">
+                <span
+                  class="text-sm text-[var(--gl-text-body)]"
+                  style="font-family: var(--gl-font-mono);"
+                >
                   {repo}
                 </span>
               </.link>
@@ -119,12 +125,20 @@ defmodule GreenlightWeb.DashboardLive do
           class="text-center py-20"
         >
           <div class="nb-card inline-block p-8 text-left max-w-md">
-            <p class="text-xl font-bold text-white uppercase tracking-wider mb-4">No repos configured</p>
+            <p class="text-xl font-bold text-white uppercase tracking-wider mb-4">
+              No repos configured
+            </p>
             <p class="text-sm text-[var(--gl-text-muted)] mb-3">Set these environment variables:</p>
-            <code class="block p-3 bg-[var(--gl-bg-primary)] border border-[var(--gl-border)] text-[var(--gl-accent)] text-xs mb-2" style="font-family: var(--gl-font-mono);">
+            <code
+              class="block p-3 bg-[var(--gl-bg-primary)] border border-[var(--gl-border)] text-[var(--gl-accent)] text-xs mb-2"
+              style="font-family: var(--gl-font-mono);"
+            >
               GREENLIGHT_BOOKMARKED_REPOS
             </code>
-            <code class="block p-3 bg-[var(--gl-bg-primary)] border border-[var(--gl-border)] text-[var(--gl-accent)] text-xs" style="font-family: var(--gl-font-mono);">
+            <code
+              class="block p-3 bg-[var(--gl-bg-primary)] border border-[var(--gl-border)] text-[var(--gl-accent)] text-xs"
+              style="font-family: var(--gl-font-mono);"
+            >
               GREENLIGHT_FOLLOWED_ORGS
             </code>
           </div>

@@ -157,7 +157,10 @@ defmodule GreenlightWeb.PipelineLive do
     <Layouts.app flash={@flash}>
       <div class="max-w-7xl mx-auto">
         <div class="mb-8">
-          <div class="flex items-center gap-2 text-sm text-[var(--gl-text-muted)] mb-2" style="font-family: var(--gl-font-mono);">
+          <div
+            class="flex items-center gap-2 text-sm text-[var(--gl-text-muted)] mb-2"
+            style="font-family: var(--gl-font-mono);"
+          >
             <.link
               navigate={~p"/repos/#{@owner}/#{@repo}"}
               class="hover:text-[var(--gl-accent)] transition-colors uppercase tracking-wider"
@@ -169,7 +172,10 @@ defmodule GreenlightWeb.PipelineLive do
           </div>
           <h1 class="text-3xl font-bold text-white uppercase tracking-wider">
             Pipeline
-            <span class="text-base font-bold text-[var(--gl-text-muted)] ml-2" style="font-family: var(--gl-font-mono);">
+            <span
+              class="text-base font-bold text-[var(--gl-text-muted)] ml-2"
+              style="font-family: var(--gl-font-mono);"
+            >
               [{@view_level}]
             </span>
           </h1>

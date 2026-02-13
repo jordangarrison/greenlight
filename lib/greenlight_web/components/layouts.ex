@@ -20,11 +20,17 @@ defmodule GreenlightWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="w-full border-b-[3px] border-[var(--gl-accent)]" style="background: var(--gl-bg-surface);">
+    <header
+      class="w-full border-b-[3px] border-[var(--gl-accent)]"
+      style="background: var(--gl-bg-surface);"
+    >
       <nav class="max-w-7xl mx-auto px-6 sm:px-8 py-4 flex items-center justify-between">
         <a href="/" class="flex items-center gap-3 group">
           <span class="w-3 h-3 bg-[var(--gl-accent)] rounded-full shadow-[0_0_8px_var(--gl-accent)]" />
-          <span class="text-xl font-bold tracking-wider text-white" style="font-family: var(--gl-font-mono);">
+          <span
+            class="text-xl font-bold tracking-wider text-white"
+            style="font-family: var(--gl-font-mono);"
+          >
             GREENLIGHT
           </span>
         </a>
