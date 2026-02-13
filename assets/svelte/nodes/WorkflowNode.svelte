@@ -31,10 +31,10 @@
   );
 </script>
 
-<Handle type="target" position={Position.Top} />
+<Handle type="target" position={Position.Left} />
 
 <div
-  class="px-4 py-3 min-w-[220px] cursor-pointer transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5"
+  class="px-4 py-3 w-[240px] cursor-pointer transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5"
   style="background: var(--gl-bg-raised); border: 2px solid {borderColor}; border-left: 4px solid {borderColor}; box-shadow: 3px 3px 0px {shadowColor}; font-family: var(--gl-font-mono);"
 >
   <div class="flex items-center justify-between gap-2 mb-2">
@@ -56,4 +56,4 @@
   {/if}
 </div>
 
-<Handle type="source" position={Position.Bottom} />
+<Handle type="source" position={Position.Right} />

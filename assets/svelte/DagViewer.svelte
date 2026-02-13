@@ -3,25 +3,61 @@
   import dagre from 'dagre';
   import WorkflowNode from './nodes/WorkflowNode.svelte';
   import JobNode from './nodes/JobNode.svelte';
-  import '@xyflow/svelte/dist/style.css';
+  import PipelineNode from './nodes/PipelineNode.svelte';
+  import FitViewHelper from './FitViewHelper.svelte';
 
-  let { nodes = [], edges = [], view_level = "workflows", live } = $props();
+
+  let { nodes = [], edges = [], view_level = "workflows", pipeline_label = "", pipeline_sublabel = "", live } = $props();
 
   const nodeTypes = {
     workflow: WorkflowNode,
-    job: JobNode
+    job: JobNode,
+    pipeline: PipelineNode
   };
 
-  function getLayoutedElements(inputNodes, inputEdges, direction = 'TB') {
+  function addRootNode(inputNodes, inputEdges) {
+    if (inputNodes.length === 0) return { nodes: inputNodes, edges: inputEdges };
+
+    const rootNode = {
+      id: 'pipeline-root',
+      type: 'pipeline',
+      position: { x: 0, y: 0 },
+      data: { label: pipeline_label, sublabel: pipeline_sublabel }
+    };
+
+    // Find nodes with no incoming edges — these connect to the root
+    const targetIds = new Set(inputEdges.map(e => e.target));
+    const parentless = inputNodes.filter(n => !targetIds.has(n.id));
+
+    const rootEdges = parentless.map(n => ({
+      id: `e-root-${n.id}`,
+      source: 'pipeline-root',
+      target: n.id,
+      animated: false
+    }));
+
+    return {
+      nodes: [rootNode, ...inputNodes],
+      edges: [...rootEdges, ...inputEdges]
+    };
+  }
+
+  function getLayoutedElements(inputNodes, inputEdges, direction = 'LR') {
     const g = new dagre.graphlib.Graph();
     g.setDefaultEdgeLabel(() => ({}));
-    g.setGraph({ rankdir: direction, nodesep: 60, ranksep: 90 });
+    g.setGraph({ rankdir: direction, nodesep: 30, ranksep: 100 });
 
-    const nodeWidth = view_level === 'workflows' ? 240 : 220;
-    const nodeHeight = view_level === 'workflows' ? 110 : 100;
+    const nodeWidth = (node) => {
+      if (node.type === 'pipeline') return 180;
+      return view_level === 'workflows' ? 240 : 220;
+    };
+    const nodeHeight = (node) => {
+      if (node.type === 'pipeline') return 70;
+      return view_level === 'workflows' ? 110 : 100;
+    };
 
     inputNodes.forEach(node => {
-      g.setNode(node.id, { width: nodeWidth, height: nodeHeight });
+      g.setNode(node.id, { width: nodeWidth(node), height: nodeHeight(node) });
     });
 
     inputEdges.forEach(edge => {
@@ -32,19 +68,25 @@
 
     return inputNodes.map(node => {
       const pos = g.node(node.id);
+      const w = nodeWidth(node);
+      const h = nodeHeight(node);
       return {
         ...node,
         position: {
-          x: pos.x - nodeWidth / 2,
-          y: pos.y - nodeHeight / 2
-        }
+          x: pos.x - w / 2,
+          y: pos.y - h / 2
+        },
+        width: w,
+        height: h,
+        style: `width: ${w}px; max-width: ${w}px;`
       };
     });
   }
 
-  const layoutedNodes = $derived(getLayoutedElements(nodes, edges));
+  const withRoot = $derived(addRootNode(nodes, edges));
+  const layoutedNodes = $derived(getLayoutedElements(withRoot.nodes, withRoot.edges));
 
-  const styledEdges = $derived(edges.map(edge => ({
+  const styledEdges = $derived(withRoot.edges.map(edge => ({
     ...edge,
     style: `stroke: var(--gl-border-strong); stroke-width: 2px;`,
     animated: edge.animated || false
@@ -53,7 +95,10 @@
   function handleNodeClick(event) {
     const node = event.detail.node;
     if (view_level === 'workflows' && node.type === 'workflow') {
-      live.pushEvent("node_clicked", { workflow_run_id: parseInt(node.id.replace("wf-", "")) });
+      live.pushEvent("node_clicked", {
+        workflow_run_id: parseInt(node.id.replace("wf-", "")),
+        workflow_name: node.data.name
+      });
     }
   }
 
@@ -62,7 +107,7 @@
   }
 </script>
 
-<div class="w-full h-[650px] relative" style="background: var(--gl-bg-primary);">
+<div class="w-full h-[calc(100vh-200px)] min-h-[400px] relative overflow-hidden" style="background: var(--gl-bg-primary);">
   {#if view_level === 'jobs'}
     <button
       onclick={handleBackClick}
@@ -78,6 +123,7 @@
     edges={styledEdges}
     {nodeTypes}
     fitView
+    fitViewOptions={{ padding: 0.05 }}
     onnodeclick={handleNodeClick}
     nodesDraggable={false}
     nodesConnectable={false}
@@ -85,6 +131,7 @@
     defaultEdgeOptions={{ type: 'smoothstep' }}
     colorMode="dark"
   >
+    <FitViewHelper nodeCount={layoutedNodes.length} />
     <Background bgColor="var(--gl-bg-primary)" gap={20} color="var(--gl-border)" />
     <Controls />
     <MiniMap
@@ -97,6 +144,7 @@
 
 <style>
   :global(.svelte-flow) {
+    background-color: var(--gl-bg-primary) !important;
     --xy-background-color: var(--gl-bg-primary) !important;
     --xy-node-background-color: transparent !important;
     --xy-node-border-radius: 0 !important;

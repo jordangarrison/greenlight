@@ -32,10 +32,10 @@
   );
 </script>
 
-<Handle type="target" position={Position.Top} />
+<Handle type="target" position={Position.Left} />
 
 <div
-  class="px-3 py-2 min-w-[200px] transition-all duration-150"
+  class="px-3 py-2 w-[220px] transition-all duration-150"
   style="background: var(--gl-bg-raised); border: 2px solid {borderColor}; border-left: 4px solid {borderColor}; box-shadow: 3px 3px 0px {shadowColor}; font-family: var(--gl-font-mono);"
 >
   <div class="flex items-center justify-between gap-2 mb-1">
@@ -62,4 +62,4 @@
   {/if}
 </div>
 
-<Handle type="source" position={Position.Bottom} />
+<Handle type="source" position={Position.Right} />

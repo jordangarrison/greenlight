@@ -14,6 +14,7 @@ defmodule GreenlightWeb.PipelineLive do
         sha: sha,
         view_level: "workflows",
         selected_run_id: nil,
+        selected_run_name: nil,
         nodes: [],
         edges: [],
         page_title: "#{owner}/#{repo} - #{String.slice(sha, 0, 7)}"
@@ -96,7 +97,10 @@ defmodule GreenlightWeb.PipelineLive do
   end
 
   @impl true
-  def handle_event("node_clicked", %{"workflow_run_id" => run_id}, socket) do
+  def handle_event("node_clicked", params, socket) do
+    run_id = params["workflow_run_id"]
+    run_name = params["workflow_name"]
+
     case Client.list_jobs(socket.assigns.owner, socket.assigns.repo, run_id) do
       {:ok, jobs} ->
         %{nodes: nodes, edges: edges} = WorkflowGraph.build_job_dag(jobs)
@@ -105,6 +109,7 @@ defmodule GreenlightWeb.PipelineLive do
          assign(socket,
            view_level: "jobs",
            selected_run_id: run_id,
+           selected_run_name: run_name,
            nodes: nodes,
            edges: edges
          )}
@@ -134,6 +139,20 @@ defmodule GreenlightWeb.PipelineLive do
     {:noreply, socket}
   end
 
+  defp pipeline_label(assigns) do
+    case assigns.view_level do
+      "workflows" -> String.slice(assigns.sha, 0, 7)
+      "jobs" -> assigns.selected_run_name || "Workflow"
+    end
+  end
+
+  defp pipeline_sublabel(assigns) do
+    case assigns.view_level do
+      "workflows" -> "#{assigns.owner}/#{assigns.repo}"
+      "jobs" -> String.slice(assigns.sha, 0, 7)
+    end
+  end
+
   defp refresh_job_view(socket) do
     case socket.assigns.selected_run_id do
       nil ->
@@ -155,8 +174,8 @@ defmodule GreenlightWeb.PipelineLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash}>
-      <div class="max-w-7xl mx-auto">
-        <div class="mb-8">
+      <div class="px-4">
+        <div class="mb-4">
           <div
             class="flex items-center gap-2 text-sm text-[var(--gl-text-muted)] mb-2"
             style="font-family: var(--gl-font-mono);"
@@ -188,7 +207,9 @@ defmodule GreenlightWeb.PipelineLive do
               %{
                 nodes: @nodes,
                 edges: @edges,
-                view_level: @view_level
+                view_level: @view_level,
+                pipeline_label: pipeline_label(assigns),
+                pipeline_sublabel: pipeline_sublabel(assigns)
               }
             }
             socket={@socket}
