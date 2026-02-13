@@ -208,8 +208,7 @@
     };
   }));
 
-  function handleNodeClick(event) {
-    const node = event.detail.node;
+  function handleNodeClick({ node, event }) {
     if (node.type === 'workflow') {
       const runId = parseInt(node.id.replace('wf-', ''));
       toggleWorkflow(runId);
@@ -270,7 +269,7 @@
     border-radius: 0 !important;
   }
   :global(.svelte-flow .svelte-flow__edge-path) {
-    stroke: var(--gl-border-strong) !important;
-    stroke-width: 2px !important;
+    stroke: var(--gl-border-strong);
+    stroke-width: 2px;
   }
 </style>
