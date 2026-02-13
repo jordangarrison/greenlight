@@ -15,10 +15,10 @@
   function getLayoutedElements(inputNodes, inputEdges, direction = 'TB') {
     const g = new dagre.graphlib.Graph();
     g.setDefaultEdgeLabel(() => ({}));
-    g.setGraph({ rankdir: direction, nodesep: 50, ranksep: 80 });
+    g.setGraph({ rankdir: direction, nodesep: 60, ranksep: 90 });
 
-    const nodeWidth = view_level === 'workflows' ? 220 : 200;
-    const nodeHeight = view_level === 'workflows' ? 100 : 90;
+    const nodeWidth = view_level === 'workflows' ? 240 : 220;
+    const nodeHeight = view_level === 'workflows' ? 110 : 100;
 
     inputNodes.forEach(node => {
       g.setNode(node.id, { width: nodeWidth, height: nodeHeight });
@@ -44,6 +44,12 @@
 
   const layoutedNodes = $derived(getLayoutedElements(nodes, edges));
 
+  const styledEdges = $derived(edges.map(edge => ({
+    ...edge,
+    style: `stroke: var(--gl-border-strong); stroke-width: 2px;`,
+    animated: edge.animated || false
+  })));
+
   function handleNodeClick(event) {
     const node = event.detail.node;
     if (view_level === 'workflows' && node.type === 'workflow') {
@@ -56,19 +62,20 @@
   }
 </script>
 
-<div class="w-full h-[600px] relative">
+<div class="w-full h-[650px] relative" style="background: var(--gl-bg-primary);">
   {#if view_level === 'jobs'}
     <button
       onclick={handleBackClick}
-      class="absolute top-3 left-3 z-10 px-3 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-1.5"
+      class="absolute top-3 left-3 z-10 px-4 py-2 text-sm font-bold uppercase tracking-wider nb-btn cursor-pointer"
+      style="background: var(--gl-bg-raised); color: var(--gl-accent); border: 2px solid var(--gl-accent); font-family: var(--gl-font-mono);"
     >
-      ← Back to workflows
+      &larr; Workflows
     </button>
   {/if}
 
   <SvelteFlow
     nodes={layoutedNodes}
-    {edges}
+    edges={styledEdges}
     {nodeTypes}
     fitView
     onnodeclick={handleNodeClick}
@@ -76,9 +83,44 @@
     nodesConnectable={false}
     elementsSelectable={true}
     defaultEdgeOptions={{ type: 'smoothstep' }}
+    colorMode="dark"
   >
-    <Background />
+    <Background bgColor="var(--gl-bg-primary)" gap={20} color="var(--gl-border)" />
     <Controls />
-    <MiniMap />
+    <MiniMap
+      maskColor="rgba(0, 0, 0, 0.7)"
+      bgColor="var(--gl-bg-surface)"
+      nodeColor="var(--gl-border-strong)"
+    />
   </SvelteFlow>
 </div>
+
+<style>
+  :global(.svelte-flow) {
+    --xy-background-color: var(--gl-bg-primary) !important;
+    --xy-node-background-color: transparent !important;
+    --xy-node-border-radius: 0 !important;
+    --xy-edge-stroke: var(--gl-border-strong) !important;
+    --xy-edge-stroke-width: 2px !important;
+    --xy-minimap-background-color: var(--gl-bg-surface) !important;
+    --xy-controls-button-background-color: var(--gl-bg-raised) !important;
+    --xy-controls-button-color: var(--gl-text-body) !important;
+    --xy-controls-button-border-color: var(--gl-border) !important;
+  }
+  :global(.svelte-flow .svelte-flow__controls button) {
+    border: 2px solid var(--gl-border) !important;
+    border-radius: 0 !important;
+  }
+  :global(.svelte-flow .svelte-flow__controls button:hover) {
+    background: var(--gl-bg-surface) !important;
+    border-color: var(--gl-accent) !important;
+  }
+  :global(.svelte-flow .svelte-flow__minimap) {
+    border: 2px solid var(--gl-border) !important;
+    border-radius: 0 !important;
+  }
+  :global(.svelte-flow .svelte-flow__edge-path) {
+    stroke: var(--gl-border-strong) !important;
+    stroke-width: 2px !important;
+  }
+</style>
