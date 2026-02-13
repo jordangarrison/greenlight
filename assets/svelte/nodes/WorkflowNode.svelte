@@ -39,11 +39,19 @@
 >
   <div class="flex items-center justify-between gap-2 mb-2">
     <span class="font-bold text-sm truncate text-white">{data.name}</span>
-    <button onclick={openGitHub} class="opacity-40 hover:opacity-100 transition-opacity text-[var(--gl-accent)]" title="View on GitHub">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-      </svg>
-    </button>
+    <div class="flex items-center gap-1">
+      <button onclick={openGitHub} class="opacity-40 hover:opacity-100 transition-opacity text-[var(--gl-accent)]" title="View on GitHub">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+      </button>
+      <span
+        class="text-xs transition-transform duration-200 text-[var(--gl-text-muted)]"
+        style="display: inline-block; transform: rotate({data.expanded ? '90deg' : '0deg'});"
+      >
+        &#9656;
+      </span>
+    </div>
   </div>
   <div class="flex items-center justify-between gap-3">
     <StatusBadge status={data.status} conclusion={data.conclusion} />
