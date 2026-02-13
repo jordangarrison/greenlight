@@ -54,46 +54,61 @@ defmodule GreenlightWeb.DashboardLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash}>
-      <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold mb-8">Greenlight</h1>
+      <div class="max-w-6xl mx-auto">
+        <h1 class="text-4xl font-bold uppercase tracking-wider text-white mb-10">
+          Dashboard
+        </h1>
 
-        <section :if={@bookmarked_repos != []} class="mb-10">
-          <h2 class="text-lg font-semibold mb-4">Bookmarked Repos</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <section :if={@bookmarked_repos != []} class="mb-12">
+          <h2 class="text-lg font-bold uppercase tracking-wider text-[var(--gl-accent)] mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 bg-[var(--gl-accent)]" />
+            Bookmarked Repos
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <.link
               :for={repo <- @bookmarked_repos}
               navigate={"/repos/#{repo}"}
-              class="block p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+              class="nb-card block p-5"
             >
-              <span class="font-medium">{repo}</span>
+              <span class="text-base font-bold text-white" style="font-family: var(--gl-font-mono);">
+                {repo}
+              </span>
+              <span class="block text-xs text-[var(--gl-text-muted)] mt-2 uppercase tracking-wider">
+                View pipelines &rarr;
+              </span>
             </.link>
           </div>
         </section>
 
-        <section :if={@followed_orgs != []} class="mb-10">
-          <h2 class="text-lg font-semibold mb-4">Organizations</h2>
+        <section :if={@followed_orgs != []} class="mb-12">
+          <h2 class="text-lg font-bold uppercase tracking-wider text-[var(--gl-accent)] mb-6 flex items-center gap-2">
+            <span class="w-2 h-2 bg-[var(--gl-accent)]" />
+            Organizations
+          </h2>
           <div :for={org <- @followed_orgs} class="mb-4">
             <button
               phx-click="toggle_org"
               phx-value-org={org}
-              class="flex items-center gap-2 w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              class="flex items-center gap-3 w-full text-left p-4 border-2 border-[var(--gl-border)] border-l-4 border-l-[var(--gl-accent)] bg-[var(--gl-bg-raised)] hover:bg-[var(--gl-bg-surface)] transition-colors cursor-pointer"
             >
-              <span class="text-xs">
-                {if MapSet.member?(@expanded_orgs, org), do: "▼", else: "▶"}
+              <span class="text-sm text-[var(--gl-accent)]" style="font-family: var(--gl-font-mono);">
+                {if MapSet.member?(@expanded_orgs, org), do: "[-]", else: "[+]"}
               </span>
-              <span class="font-medium">{org}</span>
-              <span class="text-sm text-gray-500 ml-auto">
+              <span class="font-bold text-white" style="font-family: var(--gl-font-mono);">{org}</span>
+              <span class="text-sm text-[var(--gl-text-muted)] ml-auto" style="font-family: var(--gl-font-mono);">
                 {length(Map.get(@org_repos, org, []))} repos
               </span>
             </button>
 
-            <div :if={MapSet.member?(@expanded_orgs, org)} class="mt-2 ml-6 space-y-1">
+            <div :if={MapSet.member?(@expanded_orgs, org)} class="mt-2 ml-6 space-y-2">
               <.link
                 :for={repo <- Map.get(@org_repos, org, [])}
                 navigate={"/repos/#{repo}"}
-                class="block p-2 rounded text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                class="nb-card-muted block p-3"
               >
-                {repo}
+                <span class="text-sm text-[var(--gl-text-body)]" style="font-family: var(--gl-font-mono);">
+                  {repo}
+                </span>
               </.link>
             </div>
           </div>
@@ -101,18 +116,18 @@ defmodule GreenlightWeb.DashboardLive do
 
         <div
           :if={@bookmarked_repos == [] and @followed_orgs == []}
-          class="text-center py-16 text-gray-500"
+          class="text-center py-20"
         >
-          <p class="text-lg mb-2">No repos configured yet</p>
-          <p class="text-sm">
-            Set
-            <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">
+          <div class="nb-card inline-block p-8 text-left max-w-md">
+            <p class="text-xl font-bold text-white uppercase tracking-wider mb-4">No repos configured</p>
+            <p class="text-sm text-[var(--gl-text-muted)] mb-3">Set these environment variables:</p>
+            <code class="block p-3 bg-[var(--gl-bg-primary)] border border-[var(--gl-border)] text-[var(--gl-accent)] text-xs mb-2" style="font-family: var(--gl-font-mono);">
               GREENLIGHT_BOOKMARKED_REPOS
             </code>
-            and
-            <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">GREENLIGHT_FOLLOWED_ORGS</code>
-            environment variables
-          </p>
+            <code class="block p-3 bg-[var(--gl-bg-primary)] border border-[var(--gl-border)] text-[var(--gl-accent)] text-xs" style="font-family: var(--gl-font-mono);">
+              GREENLIGHT_FOLLOWED_ORGS
+            </code>
+          </div>
         </div>
       </div>
     </Layouts.app>
