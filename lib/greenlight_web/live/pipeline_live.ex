@@ -155,37 +155,39 @@ defmodule GreenlightWeb.PipelineLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash}>
-      <div class="max-w-6xl mx-auto">
-        <div class="mb-6">
-          <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+      <div class="max-w-7xl mx-auto">
+        <div class="mb-8">
+          <div class="flex items-center gap-2 text-sm text-[var(--gl-text-muted)] mb-2" style="font-family: var(--gl-font-mono);">
             <.link
               navigate={~p"/repos/#{@owner}/#{@repo}"}
-              class="hover:text-blue-600 transition-colors"
+              class="hover:text-[var(--gl-accent)] transition-colors uppercase tracking-wider"
             >
               {@owner}/{@repo}
             </.link>
-            <span>/</span>
-            <span class="font-mono">{String.slice(@sha, 0, 7)}</span>
+            <span class="text-[var(--gl-border)]">/</span>
+            <span class="text-[var(--gl-accent)]">{String.slice(@sha, 0, 7)}</span>
           </div>
-          <h1 class="text-2xl font-bold">
+          <h1 class="text-3xl font-bold text-white uppercase tracking-wider">
             Pipeline
-            <span class="text-base font-normal text-gray-500">
-              ({@view_level})
+            <span class="text-base font-bold text-[var(--gl-text-muted)] ml-2" style="font-family: var(--gl-font-mono);">
+              [{@view_level}]
             </span>
           </h1>
         </div>
 
-        <.svelte
-          name="DagViewer"
-          props={
-            %{
-              nodes: @nodes,
-              edges: @edges,
-              view_level: @view_level
+        <div class="nb-card-muted p-1">
+          <.svelte
+            name="DagViewer"
+            props={
+              %{
+                nodes: @nodes,
+                edges: @edges,
+                view_level: @view_level
+              }
             }
-          }
-          socket={@socket}
-        />
+            socket={@socket}
+          />
+        </div>
       </div>
     </Layouts.app>
     """
