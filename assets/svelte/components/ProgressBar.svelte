@@ -4,9 +4,9 @@
   const percent = $derived(total > 0 ? Math.round((completed / total) * 100) : 0)
 </script>
 
-<div class="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
+<div class="w-full h-2 border border-[var(--gl-border)]" style="background: var(--gl-bg-primary);">
   <div
-    class="h-1.5 rounded-full transition-all duration-500 {percent === 100 ? 'bg-green-500' : 'bg-amber-400'}"
-    style="width: {percent}%"
+    class="h-full transition-all duration-500"
+    style="width: {percent}%; background: {percent === 100 ? 'var(--gl-status-success)' : 'var(--gl-status-warning)'};"
   ></div>
 </div>

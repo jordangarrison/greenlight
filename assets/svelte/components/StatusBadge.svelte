@@ -2,19 +2,24 @@
   let { status = "queued", conclusion = null } = $props()
 
   const displayStatus = $derived(conclusion || status)
-  const colorClass = $derived({
-    queued: "bg-gray-400",
-    in_progress: "bg-amber-400 animate-pulse",
-    success: "bg-green-500",
-    failure: "bg-red-500",
-    cancelled: "bg-gray-400",
-    skipped: "bg-gray-300"
-  }[displayStatus] || "bg-gray-400")
+  const colorStyles = $derived({
+    queued: { bg: "var(--gl-status-pending)", text: "var(--gl-text-body)" },
+    in_progress: { bg: "var(--gl-status-warning)", text: "var(--gl-bg-primary)" },
+    success: { bg: "var(--gl-status-success)", text: "var(--gl-bg-primary)" },
+    failure: { bg: "var(--gl-status-error)", text: "var(--gl-bg-primary)" },
+    cancelled: { bg: "var(--gl-status-pending)", text: "var(--gl-text-body)" },
+    skipped: { bg: "var(--gl-border)", text: "var(--gl-text-muted)" }
+  }[displayStatus] || { bg: "var(--gl-status-pending)", text: "var(--gl-text-body)" })
 </script>
 
-<span class="inline-flex items-center gap-1.5">
-  <span class="w-2.5 h-2.5 rounded-full {colorClass}"></span>
-  <span class="text-xs font-medium capitalize {conclusion === 'cancelled' ? 'line-through' : ''}">
+<span
+  class="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
+  style="background: {colorStyles.bg}; color: {colorStyles.text}; border-color: {colorStyles.bg}; font-family: var(--gl-font-mono);"
+  class:animate-pulse={displayStatus === 'in_progress'}
+>
+  {#if displayStatus === 'cancelled'}
+    <span class="line-through">{displayStatus}</span>
+  {:else}
     {displayStatus}
-  </span>
+  {/if}
 </span>
