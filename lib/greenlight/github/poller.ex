@@ -92,7 +92,10 @@ defmodule Greenlight.GitHub.Poller do
 
     with {:ok, runs} <- Client.list_workflow_runs(state.owner, state.repo, head_sha: state.ref),
          runs_with_jobs <- fetch_jobs_for_runs(state.owner, state.repo, runs) do
-      graph_data = WorkflowGraph.build_workflow_dag(runs_with_jobs)
+      %{nodes: nodes, edges: edges} = WorkflowGraph.build_workflow_dag(runs_with_jobs)
+      workflow_runs = WorkflowGraph.serialize_workflow_runs(runs_with_jobs)
+
+      graph_data = %{nodes: nodes, edges: edges, workflow_runs: workflow_runs}
 
       if graph_data != state.last_state do
         Phoenix.PubSub.broadcast(
