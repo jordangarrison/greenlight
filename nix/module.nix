@@ -85,6 +85,12 @@ in
       '';
     };
 
+    ssrEnabled = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to enable server-side rendering via LiveSvelte (requires Node.js at runtime).";
+    };
+
     openFirewall = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -132,6 +138,8 @@ in
         ERL_EPMD_ADDRESS = "127.0.0.1";
         HOME = "/var/lib/greenlight";
         RELEASE_TMP = "/var/lib/greenlight/tmp";
+      } // lib.optionalAttrs (!cfg.ssrEnabled) {
+        GREENLIGHT_SSR_ENABLED = "false";
       } // lib.optionalAttrs (cfg.bookmarkedRepos != [ ]) {
         GREENLIGHT_BOOKMARKED_REPOS = lib.concatStringsSep "," cfg.bookmarkedRepos;
       } // lib.optionalAttrs (cfg.followedOrgs != [ ]) {

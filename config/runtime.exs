@@ -76,8 +76,11 @@ if config_env() == :prod do
         |> String.to_charlist()
         |> :inet.parse_address()
         |> case do
-          {:ok, ip} -> ip
-          {:error, _} -> {0, 0, 0, 0, 0, 0, 0, 0}
+          {:ok, ip} ->
+            ip
+
+          {:error, _} ->
+            raise "invalid GREENLIGHT_LISTEN_ADDRESS: #{inspect(addr)}"
         end
     end
 
