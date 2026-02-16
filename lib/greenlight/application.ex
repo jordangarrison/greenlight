@@ -7,16 +7,24 @@ defmodule Greenlight.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      {NodeJS.Supervisor, [path: LiveSvelte.SSR.NodeJS.server_path(), pool_size: 4]},
-      GreenlightWeb.Telemetry,
-      {DNSCluster, query: Application.get_env(:greenlight, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: Greenlight.PubSub},
-      {Registry, keys: :unique, name: Greenlight.PollerRegistry},
-      {DynamicSupervisor, name: Greenlight.PollerSupervisor, strategy: :one_for_one},
-      # Start to serve requests, typically the last entry
-      GreenlightWeb.Endpoint
-    ]
+    ssr_children =
+      if Application.get_env(:greenlight, :ssr_enabled, true) do
+        [{NodeJS.Supervisor, [path: LiveSvelte.SSR.NodeJS.server_path(), pool_size: 4]}]
+      else
+        []
+      end
+
+    children =
+      ssr_children ++
+        [
+          GreenlightWeb.Telemetry,
+          {DNSCluster, query: Application.get_env(:greenlight, :dns_cluster_query) || :ignore},
+          {Phoenix.PubSub, name: Greenlight.PubSub},
+          {Registry, keys: :unique, name: Greenlight.PollerRegistry},
+          {DynamicSupervisor, name: Greenlight.PollerSupervisor, strategy: :one_for_one},
+          # Start to serve requests, typically the last entry
+          GreenlightWeb.Endpoint
+        ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

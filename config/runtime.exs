@@ -41,6 +41,12 @@ greenlight_config =
     token -> Keyword.put(greenlight_config, :github_token, token)
   end
 
+greenlight_config =
+  case System.get_env("GREENLIGHT_SSR_ENABLED") do
+    "false" -> Keyword.put(greenlight_config, :ssr_enabled, false)
+    _ -> greenlight_config
+  end
+
 config :greenlight, greenlight_config
 
 if config_env() == :prod do
