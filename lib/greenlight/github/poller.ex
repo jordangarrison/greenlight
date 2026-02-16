@@ -11,7 +11,16 @@ defmodule Greenlight.GitHub.Poller do
   @active_interval 10_000
   @idle_interval 60_000
 
-  defstruct [:owner, :repo, :ref, :poll_interval, :last_state, monitors: %{}, subscriber_count: 0]
+  defstruct [
+    :owner,
+    :repo,
+    :ref,
+    :poll_interval,
+    :last_state,
+    monitors: %{},
+    subscriber_count: 0,
+    workflow_defs: %{}
+  ]
 
   def start_link(opts) do
     owner = Keyword.fetch!(opts, :owner)
@@ -92,8 +101,16 @@ defmodule Greenlight.GitHub.Poller do
 
     with {:ok, runs} <- Client.list_workflow_runs(state.owner, state.repo, head_sha: state.ref),
          runs_with_jobs <- fetch_jobs_for_runs(state.owner, state.repo, runs) do
-      %{nodes: nodes, edges: edges} = WorkflowGraph.build_workflow_dag(runs_with_jobs)
-      workflow_runs = WorkflowGraph.serialize_workflow_runs(runs_with_jobs)
+      {runs_with_needs, workflow_defs} =
+        resolve_all_job_needs(
+          state.owner,
+          state.repo,
+          runs_with_jobs,
+          Map.get(state, :workflow_defs, %{})
+        )
+
+      %{nodes: nodes, edges: edges} = WorkflowGraph.build_workflow_dag(runs_with_needs)
+      workflow_runs = WorkflowGraph.serialize_workflow_runs(runs_with_needs)
 
       graph_data = %{nodes: nodes, edges: edges, workflow_runs: workflow_runs}
 
@@ -105,7 +122,10 @@ defmodule Greenlight.GitHub.Poller do
         )
       end
 
-      %{state | last_state: graph_data, poll_interval: compute_interval(runs_with_jobs)}
+      state
+      |> Map.put(:last_state, graph_data)
+      |> Map.put(:poll_interval, compute_interval(runs_with_needs))
+      |> Map.put(:workflow_defs, workflow_defs)
     else
       {:error, _reason} ->
         state
@@ -119,6 +139,46 @@ defmodule Greenlight.GitHub.Poller do
         {:error, _} -> run
       end
     end)
+  end
+
+  defp resolve_all_job_needs(owner, repo, runs, workflow_defs) do
+    # Collect unique workflow paths to fetch
+    paths_to_fetch =
+      runs
+      |> Enum.filter(& &1.path)
+      |> Enum.uniq_by(& &1.path)
+
+    # Fetch or use cached workflow YAML content
+    workflow_defs =
+      Enum.reduce(paths_to_fetch, workflow_defs, fn run, defs ->
+        cache_key = {run.path, run.head_sha}
+
+        if Map.has_key?(defs, cache_key) do
+          defs
+        else
+          case Client.get_repo_content(owner, repo, run.path, run.head_sha) do
+            {:ok, content} -> Map.put(defs, cache_key, content)
+            {:error, _} -> defs
+          end
+        end
+      end)
+
+    # Apply resolved needs to each run's jobs
+    runs =
+      Enum.map(runs, fn run ->
+        cache_key = {run.path, run.head_sha}
+
+        case Map.get(workflow_defs, cache_key) do
+          nil ->
+            run
+
+          yaml_content ->
+            resolved_jobs = WorkflowGraph.resolve_job_needs(yaml_content, run.jobs)
+            %{run | jobs: resolved_jobs}
+        end
+      end)
+
+    {runs, workflow_defs}
   end
 
   defp compute_interval(runs) do

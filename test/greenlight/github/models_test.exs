@@ -14,6 +14,7 @@ defmodule Greenlight.GitHub.ModelsTest do
         "head_sha" => "abc123",
         "event" => "push",
         "html_url" => "https://github.com/owner/repo/actions/runs/123",
+        "path" => ".github/workflows/ci.yml",
         "created_at" => "2026-02-12T10:00:00Z",
         "updated_at" => "2026-02-12T10:01:00Z"
       }
@@ -27,6 +28,7 @@ defmodule Greenlight.GitHub.ModelsTest do
       assert run.head_sha == "abc123"
       assert run.event == "push"
       assert run.html_url == "https://github.com/owner/repo/actions/runs/123"
+      assert run.path == ".github/workflows/ci.yml"
       assert run.jobs == []
     end
   end

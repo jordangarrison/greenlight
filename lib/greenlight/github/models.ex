@@ -97,6 +97,7 @@ defmodule Greenlight.GitHub.Models do
       :head_sha,
       :event,
       :html_url,
+      :path,
       :created_at,
       :updated_at,
       jobs: []
@@ -112,6 +113,7 @@ defmodule Greenlight.GitHub.Models do
         head_sha: data["head_sha"],
         event: data["event"],
         html_url: data["html_url"],
+        path: data["path"],
         created_at: parse_datetime(data["created_at"]),
         updated_at: parse_datetime(data["updated_at"])
       }

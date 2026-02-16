@@ -106,6 +106,123 @@ defmodule Greenlight.GitHub.WorkflowGraphTest do
     end
   end
 
+  describe "resolve_job_needs/2" do
+    test "populates needs from workflow YAML" do
+      yaml = """
+      name: CI
+      on: push
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps: []
+        test:
+          needs: build
+          runs-on: ubuntu-latest
+          steps: []
+        deploy:
+          needs: [build, test]
+          runs-on: ubuntu-latest
+          steps: []
+      """
+
+      jobs = [
+        %Models.Job{id: 1, name: "build", status: :completed, needs: []},
+        %Models.Job{id: 2, name: "test", status: :completed, needs: []},
+        %Models.Job{id: 3, name: "deploy", status: :queued, needs: []}
+      ]
+
+      resolved = WorkflowGraph.resolve_job_needs(yaml, jobs)
+
+      build = Enum.find(resolved, &(&1.name == "build"))
+      test_job = Enum.find(resolved, &(&1.name == "test"))
+      deploy = Enum.find(resolved, &(&1.name == "deploy"))
+
+      assert build.needs == []
+      assert test_job.needs == ["build"]
+      assert Enum.sort(deploy.needs) == ["build", "test"]
+    end
+
+    test "handles jobs with custom display names" do
+      yaml = """
+      name: CI
+      on: push
+      jobs:
+        build_step:
+          name: Build
+          runs-on: ubuntu-latest
+          steps: []
+        test_step:
+          name: Test
+          needs: build_step
+          runs-on: ubuntu-latest
+          steps: []
+      """
+
+      jobs = [
+        %Models.Job{id: 1, name: "Build", status: :completed, needs: []},
+        %Models.Job{id: 2, name: "Test", status: :completed, needs: []}
+      ]
+
+      resolved = WorkflowGraph.resolve_job_needs(yaml, jobs)
+
+      build = Enum.find(resolved, &(&1.name == "Build"))
+      test_job = Enum.find(resolved, &(&1.name == "Test"))
+
+      assert build.needs == []
+      assert test_job.needs == ["Build"]
+    end
+
+    test "handles matrix jobs with prefix matching" do
+      yaml = """
+      name: CI
+      on: push
+      jobs:
+        build:
+          runs-on: ubuntu-latest
+          steps: []
+        test:
+          needs: build
+          runs-on: ubuntu-latest
+          strategy:
+            matrix:
+              os: [ubuntu, macos]
+          steps: []
+      """
+
+      jobs = [
+        %Models.Job{id: 1, name: "build", status: :completed, needs: []},
+        %Models.Job{id: 2, name: "test (ubuntu)", status: :completed, needs: []},
+        %Models.Job{id: 3, name: "test (macos)", status: :completed, needs: []}
+      ]
+
+      resolved = WorkflowGraph.resolve_job_needs(yaml, jobs)
+
+      ubuntu = Enum.find(resolved, &(&1.name == "test (ubuntu)"))
+      macos = Enum.find(resolved, &(&1.name == "test (macos)"))
+
+      assert ubuntu.needs == ["build"]
+      assert macos.needs == ["build"]
+    end
+
+    test "returns jobs unchanged on invalid YAML" do
+      jobs = [%Models.Job{id: 1, name: "build", status: :completed, needs: []}]
+      resolved = WorkflowGraph.resolve_job_needs("{{invalid yaml", jobs)
+      assert resolved == jobs
+    end
+
+    test "returns jobs unchanged when YAML has no jobs key" do
+      yaml = """
+      name: CI
+      on: push
+      """
+
+      jobs = [%Models.Job{id: 1, name: "build", status: :completed, needs: []}]
+      resolved = WorkflowGraph.resolve_job_needs(yaml, jobs)
+
+      assert Enum.find(resolved, &(&1.name == "build")).needs == []
+    end
+  end
+
   describe "serialize_workflow_runs/1" do
     test "serializes workflow runs with job data for client" do
       runs = [

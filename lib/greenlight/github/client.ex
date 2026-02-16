@@ -110,6 +110,20 @@ defmodule Greenlight.GitHub.Client do
     end
   end
 
+  def get_repo_content(owner, repo, path, ref) do
+    case Req.get(new(), url: "/repos/#{owner}/#{repo}/contents/#{path}", params: %{ref: ref}) do
+      {:ok, %{status: 200, body: %{"content" => content, "encoding" => "base64"}}} ->
+        decoded = content |> String.replace(~r/\s/, "") |> Base.decode64!()
+        {:ok, decoded}
+
+      {:ok, %{status: status, body: body}} ->
+        {:error, {status, body}}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   def list_releases(owner, repo) do
     case Req.get(new(), url: "/repos/#{owner}/#{repo}/releases", params: %{per_page: 30}) do
       {:ok, %{status: 200, body: body}} ->

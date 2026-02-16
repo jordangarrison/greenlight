@@ -61,6 +61,15 @@ defmodule Greenlight.GitHub.ClientTest do
           Req.Test.json(conn, [
             %{"tag_name" => "v1.0.0", "name" => "Release 1.0"}
           ])
+
+        "/repos/owner/repo/contents/.github/workflows/ci.yml" ->
+          yaml_content = "name: CI\non:\n  push:\njobs:\n  build:\n    runs-on: ubuntu-latest\n"
+          encoded = Base.encode64(yaml_content)
+
+          Req.Test.json(conn, %{
+            "content" => encoded,
+            "encoding" => "base64"
+          })
       end
     end)
 
@@ -95,5 +104,13 @@ defmodule Greenlight.GitHub.ClientTest do
   test "list_releases/2 returns parsed releases" do
     {:ok, releases} = Client.list_releases("owner", "repo")
     assert [%{tag_name: "v1.0.0"}] = releases
+  end
+
+  test "get_repo_content/4 returns decoded file content" do
+    {:ok, content} =
+      Client.get_repo_content("owner", "repo", ".github/workflows/ci.yml", "abc123")
+
+    assert content =~ "name: CI"
+    assert content =~ "jobs:"
   end
 end
