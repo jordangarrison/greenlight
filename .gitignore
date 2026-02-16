@@ -44,3 +44,8 @@ npm-debug.log
 
 # direnv
 .direnv/
+.grove-agent
+.grove-base
+.grove-start.sh
+.grove-setup.sh
+.env
