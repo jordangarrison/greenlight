@@ -79,9 +79,11 @@ if config_env() == :prod do
         end
     end
 
+  port = String.to_integer(System.get_env("PORT", "4000"))
+
   config :greenlight, GreenlightWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
-    http: [ip: listen_ip],
+    http: [ip: listen_ip, port: port],
     secret_key_base: secret_key_base
 
   # ## SSL Support
