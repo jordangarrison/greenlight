@@ -16,14 +16,13 @@ let
   mixFodDeps = fetchMixDeps {
     pname = "${pname}-mix-deps";
     inherit version src;
-    hash = lib.fakeHash;
+    hash = "sha256-Wbv2hJLD1Wwcp+CmMuNuT5GB0BVKccHCjzDhBZpysso=";
   };
 
   npmDeps = fetchNpmDeps {
     name = "${pname}-npm-deps";
-    inherit src;
-    sourceRoot = "${src.name}/assets";
-    hash = lib.fakeHash;
+    src = src + "/assets";
+    hash = "sha256-BLuc+yYQ0rQpAWnLa1nDk7Q8mhvcgWGVT5Ywlth8opo=";
   };
 in
 mixRelease {
