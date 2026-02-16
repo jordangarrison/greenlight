@@ -68,7 +68,9 @@ if config_env() == :prod do
 
   listen_ip =
     case System.get_env("GREENLIGHT_LISTEN_ADDRESS", "::") do
-      "::" -> {0, 0, 0, 0, 0, 0, 0, 0}
+      "::" ->
+        {0, 0, 0, 0, 0, 0, 0, 0}
+
       addr ->
         addr
         |> String.to_charlist()
