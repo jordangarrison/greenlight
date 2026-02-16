@@ -1,5 +1,5 @@
 {
-  description = "Greenlight - Elixir Phoenix application";
+  description = "Greenlight - GitHub Actions workflow visualizer";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -12,40 +12,32 @@
       nixpkgs,
       flake-utils,
     }:
-    flake-utils.lib.eachDefaultSystem (
+    # Per-system outputs: packages + devShells
+    (flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-
         erlang = pkgs.beam.packages.erlang_28;
         elixir = erlang.elixir;
       in
       {
+        packages.default = pkgs.callPackage ./nix/package.nix {
+          beamPackages = erlang;
+        };
+
         devShells.default = pkgs.mkShell {
           buildInputs = [
             elixir
             erlang.erlang
-
-            # Database
             pkgs.postgresql
-
-            # Asset pipeline - provide system binaries so Phoenix
-            # doesn't download its own (which won't work on NixOS)
             pkgs.tailwindcss_4
-
-            # Node.js for LiveSvelte build pipeline
             pkgs.nodejs
-
-            # File watching for live reload
             pkgs.inotify-tools
             pkgs.watchman
           ];
 
           env = {
-            # Tell Phoenix to use system tailwind instead of downloading
             MIX_TAILWIND_PATH = "${pkgs.tailwindcss_4}/bin/tailwindcss";
-
-            # Locale settings for Elixir
             LANG = "en_US.UTF-8";
             ERL_AFLAGS = "-kernel shell_history enabled";
           };
@@ -56,5 +48,10 @@
           '';
         };
       }
-    );
+    ))
+    //
+    # System-agnostic outputs: NixOS module
+    {
+      nixosModules.default = import ./nix/module.nix self;
+    };
 }
