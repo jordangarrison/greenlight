@@ -86,8 +86,11 @@ if config_env() == :prod do
 
   port = String.to_integer(System.get_env("PORT", "4000"))
 
+  scheme = System.get_env("PHX_SCHEME", "https")
+  url_port = String.to_integer(System.get_env("PHX_URL_PORT", "443"))
+
   config :greenlight, GreenlightWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https"],
+    url: [host: host, port: url_port, scheme: scheme],
     http: [ip: listen_ip, port: port],
     secret_key_base: secret_key_base
 

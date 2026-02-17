@@ -129,10 +129,14 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
 
+      path = lib.mkIf cfg.ssrEnabled [ pkgs.nodejs ];
+
       environment = {
         PORT = toString cfg.port;
         PHX_HOST = cfg.host;
         PHX_SERVER = "true";
+        PHX_SCHEME = if cfg.nginx.enable then "https" else "http";
+        PHX_URL_PORT = toString (if cfg.nginx.enable then 443 else cfg.port);
         GREENLIGHT_LISTEN_ADDRESS = cfg.listenAddress;
         RELEASE_DISTRIBUTION = "none";
         ERL_EPMD_ADDRESS = "127.0.0.1";
