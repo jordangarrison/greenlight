@@ -94,6 +94,10 @@ if config_env() == :prod do
     http: [ip: listen_ip, port: port],
     secret_key_base: secret_key_base
 
+  if scheme == "https" do
+    config :greenlight, GreenlightWeb.Endpoint, force_ssl: [rewrite_on: [:x_forwarded_proto]]
+  end
+
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key
