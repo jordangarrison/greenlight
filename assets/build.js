@@ -10,7 +10,8 @@ const deploy = args.includes("--deploy")
 
 // Resolve node paths for Phoenix deps (phoenix-colocated, etc.)
 const depsPath = path.resolve(__dirname, "../deps")
-const buildPath = path.resolve(__dirname, "../_build/dev")
+const mixEnv = process.env.MIX_ENV || "dev"
+const buildPath = path.resolve(__dirname, `../_build/${mixEnv}`)
 
 let clientConditions = ["svelte", "browser"]
 let serverConditions = ["svelte"]

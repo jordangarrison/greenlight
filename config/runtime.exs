@@ -41,6 +41,12 @@ greenlight_config =
     token -> Keyword.put(greenlight_config, :github_token, token)
   end
 
+greenlight_config =
+  case System.get_env("GREENLIGHT_SSR_POOL_SIZE") do
+    nil -> greenlight_config
+    size -> Keyword.put(greenlight_config, :ssr_pool_size, String.to_integer(size))
+  end
+
 config :greenlight, greenlight_config
 
 if config_env() == :prod do
@@ -60,16 +66,37 @@ if config_env() == :prod do
 
   config :greenlight, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
+  listen_ip =
+    case System.get_env("GREENLIGHT_LISTEN_ADDRESS", "127.0.0.1") do
+      "::" ->
+        {0, 0, 0, 0, 0, 0, 0, 0}
+
+      addr ->
+        addr
+        |> String.to_charlist()
+        |> :inet.parse_address()
+        |> case do
+          {:ok, ip} ->
+            ip
+
+          {:error, _} ->
+            raise "invalid GREENLIGHT_LISTEN_ADDRESS: #{inspect(addr)}"
+        end
+    end
+
+  port = String.to_integer(System.get_env("PORT", "4000"))
+
+  scheme = System.get_env("PHX_SCHEME", "https")
+  url_port = String.to_integer(System.get_env("PHX_URL_PORT", "443"))
+
   config :greenlight, GreenlightWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https"],
-    http: [
-      # Enable IPv6 and bind on all interfaces.
-      # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
-      # See the documentation on https://hexdocs.pm/bandit/Bandit.html#t:options/0
-      # for details about using IPv6 vs IPv4 and loopback vs public addresses.
-      ip: {0, 0, 0, 0, 0, 0, 0, 0}
-    ],
+    url: [host: host, port: url_port, scheme: scheme],
+    http: [ip: listen_ip, port: port],
     secret_key_base: secret_key_base
+
+  if scheme == "https" do
+    config :greenlight, GreenlightWeb.Endpoint, force_ssl: [rewrite_on: [:x_forwarded_proto]]
+  end
 
   # ## SSL Support
   #

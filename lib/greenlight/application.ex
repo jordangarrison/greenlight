@@ -8,7 +8,11 @@ defmodule Greenlight.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      {NodeJS.Supervisor, [path: LiveSvelte.SSR.NodeJS.server_path(), pool_size: 4]},
+      {NodeJS.Supervisor,
+       [
+         path: LiveSvelte.SSR.NodeJS.server_path(),
+         pool_size: Application.get_env(:greenlight, :ssr_pool_size, 4)
+       ]},
       GreenlightWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:greenlight, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Greenlight.PubSub},

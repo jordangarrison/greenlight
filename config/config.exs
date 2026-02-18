@@ -8,7 +8,8 @@
 import Config
 
 config :greenlight,
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  ssr_enabled: true
 
 # Configure the endpoint
 config :greenlight, GreenlightWeb.Endpoint,
