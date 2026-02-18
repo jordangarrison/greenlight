@@ -42,9 +42,9 @@ greenlight_config =
   end
 
 greenlight_config =
-  case System.get_env("GREENLIGHT_SSR_ENABLED") do
-    "false" -> Keyword.put(greenlight_config, :ssr_enabled, false)
-    _ -> greenlight_config
+  case System.get_env("GREENLIGHT_SSR_POOL_SIZE") do
+    nil -> greenlight_config
+    size -> Keyword.put(greenlight_config, :ssr_pool_size, String.to_integer(size))
   end
 
 config :greenlight, greenlight_config
@@ -67,7 +67,7 @@ if config_env() == :prod do
   config :greenlight, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   listen_ip =
-    case System.get_env("GREENLIGHT_LISTEN_ADDRESS", "::") do
+    case System.get_env("GREENLIGHT_LISTEN_ADDRESS", "127.0.0.1") do
       "::" ->
         {0, 0, 0, 0, 0, 0, 0, 0}
 

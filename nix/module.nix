@@ -62,33 +62,36 @@ in
 
     # Secrets — per-file via LoadCredential
     githubTokenFile = lib.mkOption {
-      type = lib.types.either lib.types.path lib.types.str;
-      description = "Path to a file containing the GitHub API token.";
+      type = lib.types.str;
+      description = ''
+        Absolute path to a file containing the GitHub API token.
+        Must NOT be a Nix store path.
+        File must contain the bare token value only — no KEY=VALUE format, no trailing newline.
+        Consider using sops-nix or agenix for secret management.
+      '';
     };
 
     secretKeyBaseFile = lib.mkOption {
-      type = lib.types.either lib.types.path lib.types.str;
+      type = lib.types.str;
       description = ''
-        Path to a file containing the Phoenix SECRET_KEY_BASE.
-        Generate one with: mix phx.gen.secret
+        Absolute path to a file containing the Phoenix SECRET_KEY_BASE.
+        Must NOT be a Nix store path.
+        File must contain the bare value only — no KEY=VALUE format, no trailing newline.
+        Generate with: mix phx.gen.secret or openssl rand -base64 64
+        Consider using sops-nix or agenix for secret management.
       '';
     };
 
     # Catch-all environment file for additional secrets/overrides
     environmentFile = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
+      type = lib.types.nullOr lib.types.str;
       default = null;
       description = ''
-        Environment file as defined in {manpage}`systemd.exec(5)`.
+        Absolute path to an environment file as defined in {manpage}`systemd.exec(5)`.
+        Must NOT be a Nix store path.
         Secrets may be passed to the service without adding them to the
         world-readable Nix store. Format: KEY=VALUE, one per line.
       '';
-    };
-
-    ssrEnabled = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether to enable server-side rendering via LiveSvelte (requires Node.js at runtime).";
     };
 
     openFirewall = lib.mkOption {
@@ -113,6 +116,21 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = !(cfg.nginx.enable && cfg.host == "localhost");
+        message = "services.greenlight: nginx is enabled but host is 'localhost'. ACME certificate provisioning will fail. Set a real public hostname.";
+      }
+      {
+        assertion = !(cfg.nginx.enableACME && (builtins.match "^[0-9.:]+$" cfg.host != null || lib.hasSuffix ".local" cfg.host));
+        message = "services.greenlight: ACME is enabled but host appears to be an IP address or .local domain. ACME requires a public DNS name.";
+      }
+      {
+        assertion = !(cfg.openFirewall && cfg.nginx.enable);
+        message = "services.greenlight: openFirewall and nginx are both enabled. openFirewall exposes port ${toString cfg.port} directly. You probably want to open ports 80/443 via nginx instead.";
+      }
+    ];
+
     # System user
     users.users.greenlight = {
       isSystemUser = true;
@@ -127,9 +145,10 @@ in
     systemd.services.greenlight = {
       description = "Greenlight - GitHub Actions Workflow Visualizer";
       wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
+      wants = [ "network-online.target" ];
+      after = [ "network-online.target" ];
 
-      path = lib.mkIf cfg.ssrEnabled [ pkgs.nodejs ];
+      path = [ pkgs.nodejs ];
 
       environment = {
         PORT = toString cfg.port;
@@ -142,8 +161,6 @@ in
         ERL_EPMD_ADDRESS = "127.0.0.1";
         HOME = "/var/lib/greenlight";
         RELEASE_TMP = "/var/lib/greenlight/tmp";
-      } // lib.optionalAttrs (!cfg.ssrEnabled) {
-        GREENLIGHT_SSR_ENABLED = "false";
       } // lib.optionalAttrs (cfg.bookmarkedRepos != [ ]) {
         GREENLIGHT_BOOKMARKED_REPOS = lib.concatStringsSep "," cfg.bookmarkedRepos;
       } // lib.optionalAttrs (cfg.followedOrgs != [ ]) {
@@ -153,8 +170,13 @@ in
       };
 
       script = ''
-        # Generate a random release cookie (not using distributed Erlang, but required)
-        export RELEASE_COOKIE="$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 20)"
+        # Persist release cookie so `bin/greenlight remote` works across restarts
+        COOKIE_FILE="/var/lib/greenlight/.erlang.cookie"
+        if [ ! -f "$COOKIE_FILE" ]; then
+          tr -dc A-Za-z0-9 < /dev/urandom | head -c 20 > "$COOKIE_FILE"
+          chmod 400 "$COOKIE_FILE"
+        fi
+        export RELEASE_COOKIE="$(< "$COOKIE_FILE")"
 
         # Load secrets from systemd credentials
         export SECRET_KEY_BASE="$(< $CREDENTIALS_DIRECTORY/SECRET_KEY_BASE)"
@@ -198,24 +220,33 @@ in
         ProtectKernelModules = true;
         ProtectKernelTunables = true;
         LockPersonality = true;
+        CapabilityBoundingSet = "";
+        ProtectKernelLogs = true;
+        UMask = "0077";
       };
     };
 
     # Optional nginx reverse proxy
-    services.nginx = lib.mkIf cfg.nginx.enable {
+    services.nginx = lib.mkIf cfg.nginx.enable (let
+      urlAddr = if lib.hasInfix ":" cfg.listenAddress
+        then "[${cfg.listenAddress}]"
+        else cfg.listenAddress;
+    in {
       enable = true;
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
+      recommendedOptimisation = true;
+      recommendedGzipSettings = true;
 
       virtualHosts.${cfg.host} = {
-        forceSSL = cfg.nginx.enableACME;
+        forceSSL = true;
         enableACME = cfg.nginx.enableACME;
 
         locations."/" = {
-          proxyPass = "http://${cfg.listenAddress}:${toString cfg.port}";
+          proxyPass = "http://${urlAddr}:${toString cfg.port}";
           proxyWebsockets = true;
         };
       };
-    };
+    });
   };
 }

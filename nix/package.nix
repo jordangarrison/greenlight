@@ -33,9 +33,6 @@ mixRelease {
   # Tailwind is configured via MIX_TAILWIND_PATH in config.exs
   MIX_TAILWIND_PATH = "${tailwindcss_4}/bin/tailwindcss";
 
-  # Make Node.js available at runtime for LiveSvelte SSR
-  propagatedBuildInputs = [ nodejs ];
-
   preBuild = ''
     # Install npm dependencies for the asset pipeline
     cd assets
