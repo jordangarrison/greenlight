@@ -14,11 +14,16 @@ defmodule GreenlightWeb.DashboardLive do
         bookmarked_repos: bookmarked,
         followed_orgs: orgs,
         org_repos: %{},
-        expanded_orgs: MapSet.new()
+        expanded_orgs: MapSet.new(),
+        user: nil,
+        user_prs: [],
+        user_commits: [],
+        user_loading: true
       )
 
     if connected?(socket) do
       send(self(), :load_org_repos)
+      send(self(), :load_user)
     end
 
     {:ok, socket}
@@ -36,6 +41,40 @@ defmodule GreenlightWeb.DashboardLive do
       end)
 
     {:noreply, assign(socket, org_repos: org_repos)}
+  end
+
+  @impl true
+  def handle_info(:load_user, socket) do
+    case Client.get_authenticated_user() do
+      {:ok, user} ->
+        send(self(), :load_user_activity)
+        {:noreply, assign(socket, user: user)}
+
+      {:error, _} ->
+        {:noreply, assign(socket, user_loading: false)}
+    end
+  end
+
+  @impl true
+  def handle_info(:load_user_activity, socket) do
+    username = socket.assigns.user.login
+
+    prs_task = Task.async(fn -> Client.search_user_prs(username) end)
+    commits_task = Task.async(fn -> Client.search_user_commits(username) end)
+
+    prs =
+      case Task.await(prs_task) do
+        {:ok, prs} -> prs
+        {:error, _} -> []
+      end
+
+    commits =
+      case Task.await(commits_task) do
+        {:ok, commits} -> commits
+        {:error, _} -> []
+      end
+
+    {:noreply, assign(socket, user_prs: prs, user_commits: commits, user_loading: false)}
   end
 
   @impl true
