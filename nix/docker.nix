@@ -1,5 +1,10 @@
 { pkgs, greenlight }:
 
+let
+  uid = "999";
+  gid = "999";
+  user = "greenlight";
+in
 pkgs.dockerTools.buildLayeredImage {
   name = "ghcr.io/jordangarrison/greenlight";
   tag = "latest";
@@ -8,9 +13,19 @@ pkgs.dockerTools.buildLayeredImage {
     greenlight
     pkgs.cacert
     pkgs.nodejs-slim  # Required at runtime for live_svelte SSR (slim: no npm/docs)
+    (pkgs.dockerTools.fakeNss.override {
+      extraPasswdLines = [ "${user}:x:${uid}:${gid}::/home/${user}:/bin/false" ];
+      extraGroupLines = [ "${user}:x:${gid}:" ];
+    })
   ];
 
+  extraCommands = ''
+    mkdir -p tmp
+    chmod 1777 tmp
+  '';
+
   config = {
+    User = "${uid}:${gid}";
     Cmd = [ "/bin/server" ];
     ExposedPorts."4000/tcp" = { };
     Env = [
@@ -22,6 +37,7 @@ pkgs.dockerTools.buildLayeredImage {
       "ELIXIR_ERL_OPTIONS=+fnu"
       "PHX_SCHEME=http"
       "PHX_URL_PORT=4000"
+      "RELEASE_TMP=/tmp"
     ];
   };
 }
