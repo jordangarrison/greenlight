@@ -124,6 +124,24 @@ defmodule Greenlight.GitHub.Client do
     end
   end
 
+  def get_authenticated_user do
+    case Req.get(new(), url: "/user") do
+      {:ok, %{status: 200, body: body}} ->
+        {:ok,
+         %{
+           login: body["login"],
+           name: body["name"],
+           avatar_url: body["avatar_url"]
+         }}
+
+      {:ok, %{status: status, body: body}} ->
+        {:error, {status, body}}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   def list_releases(owner, repo) do
     case Req.get(new(), url: "/repos/#{owner}/#{repo}/releases", params: %{per_page: 30}) do
       {:ok, %{status: 200, body: body}} ->

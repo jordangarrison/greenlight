@@ -70,6 +70,13 @@ defmodule Greenlight.GitHub.ClientTest do
             "content" => encoded,
             "encoding" => "base64"
           })
+
+        "/user" ->
+          Req.Test.json(conn, %{
+            "login" => "testuser",
+            "name" => "Test User",
+            "avatar_url" => "https://avatars.githubusercontent.com/u/12345"
+          })
       end
     end)
 
@@ -104,6 +111,13 @@ defmodule Greenlight.GitHub.ClientTest do
   test "list_releases/2 returns parsed releases" do
     {:ok, releases} = Client.list_releases("owner", "repo")
     assert [%{tag_name: "v1.0.0"}] = releases
+  end
+
+  test "get_authenticated_user/0 returns user profile" do
+    {:ok, user} = Client.get_authenticated_user()
+    assert user.login == "testuser"
+    assert user.name == "Test User"
+    assert user.avatar_url == "https://avatars.githubusercontent.com/u/12345"
   end
 
   test "get_repo_content/4 returns decoded file content" do
