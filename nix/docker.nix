@@ -18,6 +18,9 @@ pkgs.dockerTools.buildLayeredImage {
       "RELEASE_DISTRIBUTION=none"
       "ERL_EPMD_ADDRESS=127.0.0.1"
       "RELEASE_COOKIE=greenlight-container"
+      "ELIXIR_ERL_OPTIONS=+fnu"
+      "PHX_SCHEME=http"
+      "PHX_URL_PORT=4000"
     ];
   };
 }
