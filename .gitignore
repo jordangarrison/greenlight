@@ -51,4 +51,5 @@ npm-debug.log
 .grove-base
 .grove-start.sh
 .grove-setup.sh
+.grove/
 .env

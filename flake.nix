@@ -21,8 +21,15 @@
         elixir = erlang.elixir;
       in
       {
-        packages.default = pkgs.callPackage ./nix/package.nix {
-          beamPackages = erlang;
+        packages = {
+          default = pkgs.callPackage ./nix/package.nix {
+            beamPackages = erlang;
+          };
+        } // pkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+          dockerImage = import ./nix/docker.nix {
+            inherit pkgs;
+            greenlight = self.packages.${system}.default;
+          };
         };
 
         devShells.default = pkgs.mkShell {
