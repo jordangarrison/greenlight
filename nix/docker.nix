@@ -7,6 +7,7 @@ pkgs.dockerTools.buildLayeredImage {
   contents = [
     greenlight
     pkgs.cacert
+    pkgs.nodejs  # Required at runtime for live_svelte SSR
   ];
 
   config = {
