@@ -77,6 +77,21 @@ defmodule Greenlight.GitHub.ClientTest do
             "name" => "Test User",
             "avatar_url" => "https://avatars.githubusercontent.com/u/12345"
           })
+
+        "/search/issues" ->
+          Req.Test.json(conn, %{
+            "items" => [
+              %{
+                "number" => 99,
+                "title" => "Fix bug",
+                "state" => "open",
+                "html_url" => "https://github.com/owner/repo/pull/99",
+                "updated_at" => "2026-02-19T10:00:00Z",
+                "pull_request" => %{"html_url" => "https://github.com/owner/repo/pull/99"},
+                "repository_url" => "https://api.github.com/repos/owner/repo"
+              }
+            ]
+          })
       end
     end)
 
@@ -126,5 +141,16 @@ defmodule Greenlight.GitHub.ClientTest do
 
     assert content =~ "name: CI"
     assert content =~ "jobs:"
+  end
+
+  test "search_user_prs/1 returns recent PRs for user" do
+    {:ok, prs} = Client.search_user_prs("testuser")
+    assert [pr] = prs
+    assert pr.number == 99
+    assert pr.title == "Fix bug"
+    assert pr.state == "open"
+    assert pr.repo == "owner/repo"
+    assert pr.html_url == "https://github.com/owner/repo/pull/99"
+    assert pr.updated_at == "2026-02-19T10:00:00Z"
   end
 end

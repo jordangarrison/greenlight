@@ -142,6 +142,38 @@ defmodule Greenlight.GitHub.Client do
     end
   end
 
+  def search_user_prs(username) do
+    case Req.get(new(),
+           url: "/search/issues",
+           params: %{q: "author:#{username} type:pr sort:updated", per_page: 5}
+         ) do
+      {:ok, %{status: 200, body: body}} ->
+        prs =
+          Enum.map(body["items"], fn item ->
+            repo =
+              item["repository_url"]
+              |> String.replace("https://api.github.com/repos/", "")
+
+            %{
+              number: item["number"],
+              title: item["title"],
+              state: item["state"],
+              html_url: item["html_url"],
+              updated_at: item["updated_at"],
+              repo: repo
+            }
+          end)
+
+        {:ok, prs}
+
+      {:ok, %{status: status, body: body}} ->
+        {:error, {status, body}}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   def list_releases(owner, repo) do
     case Req.get(new(), url: "/repos/#{owner}/#{repo}/releases", params: %{per_page: 30}) do
       {:ok, %{status: 200, body: body}} ->
