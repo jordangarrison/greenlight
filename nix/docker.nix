@@ -17,6 +17,7 @@ pkgs.dockerTools.buildLayeredImage {
       "GREENLIGHT_LISTEN_ADDRESS=0.0.0.0"
       "RELEASE_DISTRIBUTION=none"
       "ERL_EPMD_ADDRESS=127.0.0.1"
+      "RELEASE_COOKIE=greenlight-container"
     ];
   };
 }
