@@ -92,6 +92,25 @@ defmodule Greenlight.GitHub.ClientTest do
               }
             ]
           })
+
+        "/search/commits" ->
+          Req.Test.json(conn, %{
+            "items" => [
+              %{
+                "sha" => "abc1234567890",
+                "html_url" => "https://github.com/owner/repo/commit/abc1234567890",
+                "commit" => %{
+                  "message" => "Fix the thing\n\nDetailed description",
+                  "author" => %{
+                    "date" => "2026-02-19T09:00:00Z"
+                  }
+                },
+                "repository" => %{
+                  "full_name" => "owner/repo"
+                }
+              }
+            ]
+          })
       end
     end)
 
@@ -152,5 +171,15 @@ defmodule Greenlight.GitHub.ClientTest do
     assert pr.repo == "owner/repo"
     assert pr.html_url == "https://github.com/owner/repo/pull/99"
     assert pr.updated_at == "2026-02-19T10:00:00Z"
+  end
+
+  test "search_user_commits/1 returns recent commits for user" do
+    {:ok, commits} = Client.search_user_commits("testuser")
+    assert [commit] = commits
+    assert commit.sha == "abc1234567890"
+    assert commit.message == "Fix the thing"
+    assert commit.repo == "owner/repo"
+    assert commit.html_url == "https://github.com/owner/repo/commit/abc1234567890"
+    assert commit.authored_at == "2026-02-19T09:00:00Z"
   end
 end

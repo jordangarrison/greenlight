@@ -174,6 +174,38 @@ defmodule Greenlight.GitHub.Client do
     end
   end
 
+  def search_user_commits(username) do
+    case Req.get(new(),
+           url: "/search/commits",
+           params: %{q: "author:#{username} sort:author-date", per_page: 5}
+         ) do
+      {:ok, %{status: 200, body: body}} ->
+        commits =
+          Enum.map(body["items"], fn item ->
+            message =
+              item["commit"]["message"]
+              |> String.split("\n", parts: 2)
+              |> List.first()
+
+            %{
+              sha: item["sha"],
+              message: message,
+              repo: item["repository"]["full_name"],
+              html_url: item["html_url"],
+              authored_at: item["commit"]["author"]["date"]
+            }
+          end)
+
+        {:ok, commits}
+
+      {:ok, %{status: status, body: body}} ->
+        {:error, {status, body}}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
   def list_releases(owner, repo) do
     case Req.get(new(), url: "/repos/#{owner}/#{repo}/releases", params: %{per_page: 30}) do
       {:ok, %{status: 200, body: body}} ->
