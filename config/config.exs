@@ -44,8 +44,7 @@ config :tailwind,
   ]
 
 # Structured JSON logging via LoggerJSON
-config :logger, :default_handler,
-  formatter: {LoggerJSON.Formatters.Basic, metadata: :all}
+config :logger, :default_handler, formatter: {LoggerJSON.Formatters.Basic, metadata: :all}
 
 # Suppress default Phoenix request logging (we handle it via telemetry)
 config :phoenix, :logger, false
