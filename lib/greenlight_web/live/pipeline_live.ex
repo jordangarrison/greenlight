@@ -3,6 +3,7 @@ defmodule GreenlightWeb.PipelineLive do
 
   alias Greenlight.Pollers
   alias Greenlight.GitHub.Client
+  alias Greenlight.WideEvent
 
   @impl true
   def mount(%{"owner" => owner, "repo" => repo, "sha" => sha}, _session, socket) do
@@ -17,6 +18,15 @@ defmodule GreenlightWeb.PipelineLive do
         workflow_runs: [],
         page_title: "#{owner}/#{repo} - #{String.slice(sha, 0, 7)}"
       )
+
+    WideEvent.add(
+      live_view: "PipelineLive",
+      pipeline_owner: owner,
+      pipeline_repo: repo,
+      pipeline_sha: sha,
+      connected: connected?(socket)
+    )
+    WideEvent.emit("liveview.mounted", [], level: :debug)
 
     if connected?(socket) do
       {:ok, state} = Pollers.subscribe(owner, repo, sha)
@@ -89,6 +99,16 @@ defmodule GreenlightWeb.PipelineLive do
         {:pipeline_update, %{nodes: nodes, edges: edges, workflow_runs: workflow_runs}},
         socket
       ) do
+    WideEvent.emit(
+      "liveview.pipeline_update",
+      [
+        nodes_count: length(nodes),
+        edges_count: length(edges),
+        workflow_runs_count: length(workflow_runs)
+      ],
+      level: :debug
+    )
+
     {:noreply, assign(socket, nodes: nodes, edges: edges, workflow_runs: workflow_runs)}
   end
 

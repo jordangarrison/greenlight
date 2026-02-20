@@ -2,6 +2,7 @@ defmodule GreenlightWeb.RepoLive do
   use GreenlightWeb, :live_view
 
   alias Greenlight.GitHub.Client
+  alias Greenlight.WideEvent
 
   @impl true
   def mount(%{"owner" => owner, "repo" => repo}, _session, socket) do
@@ -17,6 +18,14 @@ defmodule GreenlightWeb.RepoLive do
         releases: [],
         loading: true
       )
+
+    WideEvent.add(
+      live_view: "RepoLive",
+      repo_owner: owner,
+      repo_name: repo,
+      connected: connected?(socket)
+    )
+    WideEvent.emit("liveview.mounted", [], level: :debug)
 
     if connected?(socket) do
       send(self(), :load_data)

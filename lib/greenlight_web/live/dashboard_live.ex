@@ -2,6 +2,7 @@ defmodule GreenlightWeb.DashboardLive do
   use GreenlightWeb, :live_view
 
   alias Greenlight.GitHub.Client
+  alias Greenlight.WideEvent
 
   @impl true
   def mount(_params, _session, socket) do
@@ -16,6 +17,14 @@ defmodule GreenlightWeb.DashboardLive do
         org_repos: %{},
         expanded_orgs: MapSet.new()
       )
+
+    WideEvent.add(
+      live_view: "DashboardLive",
+      bookmarked_repos_count: length(bookmarked),
+      followed_orgs_count: length(orgs),
+      connected: connected?(socket)
+    )
+    WideEvent.emit("liveview.mounted", [], level: :debug)
 
     if connected?(socket) do
       send(self(), :load_org_repos)
