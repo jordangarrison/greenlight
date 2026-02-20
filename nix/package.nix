@@ -16,7 +16,7 @@ let
   mixFodDeps = fetchMixDeps {
     pname = "${pname}-mix-deps";
     inherit version src;
-    hash = "sha256-Wbv2hJLD1Wwcp+CmMuNuT5GB0BVKccHCjzDhBZpysso=";
+    hash = "sha256-ekvwtyOduUlUdoIO8s359yDLGGq2VDRzMVvYG8AJVz0=";
   };
 
   npmDeps = fetchNpmDeps {

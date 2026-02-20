@@ -44,6 +44,18 @@ custom classes must fully style the input
 - Focus on **delightful details** like hover effects, loading states, and smooth page transitions
 
 
+## Nix build & dependency management
+
+This project is packaged with Nix (`nix/package.nix`) and deployed as a Docker image (`nix/docker.nix`). The Nix package uses `fetchMixDeps` with a **pinned hash** for reproducibility.
+
+**When you add, remove, or update deps in `mix.exs`:**
+1. Run `nix build .#default` — if the hash is stale, the build will fail with a hash mismatch showing the correct `got:` value
+2. Update the `hash` in `nix/package.nix` with the new value
+3. Run `nix build .#default` again to confirm it succeeds
+4. Run `nix build .#dockerImage` to confirm the container image builds
+
+**Always validate both nix builds before committing dependency changes.**
+
 ## Structured Logging (Wide Events)
 
 This project uses structured wide event logging via `Greenlight.WideEvent` with LoggerJSON. Every logical operation emits a single JSON event with accumulated context. Use the `greenlight-debugging` skill when diagnosing issues.
