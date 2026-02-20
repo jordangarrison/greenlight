@@ -5,8 +5,10 @@ defmodule Greenlight.GitHub.Poller do
   """
 
   use GenServer
+  require Logger
 
   alias Greenlight.GitHub.{Client, WorkflowGraph}
+  alias Greenlight.WideEvent
 
   @active_interval 10_000
   @idle_interval 60_000
@@ -43,6 +45,12 @@ defmodule Greenlight.GitHub.Poller do
       ref: Keyword.fetch!(opts, :ref),
       poll_interval: Keyword.get(opts, :poll_interval, @active_interval)
     }
+
+    Logger.metadata(
+      poller_owner: state.owner,
+      poller_repo: state.repo,
+      poller_ref: state.ref
+    )
 
     unless Keyword.get(opts, :skip_initial_poll, false) do
       send(self(), :poll)
@@ -97,39 +105,52 @@ defmodule Greenlight.GitHub.Poller do
   end
 
   defp do_poll(state) do
-    topic = "pipeline:#{state.owner}/#{state.repo}:#{state.ref}"
+    WideEvent.with_context("poller.poll_cycle", [level: :debug], fn ->
+      topic = "pipeline:#{state.owner}/#{state.repo}:#{state.ref}"
+      WideEvent.add(subscriber_count: state.subscriber_count, poll_topic: topic)
 
-    with {:ok, runs} <- Client.list_workflow_runs(state.owner, state.repo, head_sha: state.ref),
-         runs_with_jobs <- fetch_jobs_for_runs(state.owner, state.repo, runs) do
-      {runs_with_needs, workflow_defs} =
-        resolve_all_job_needs(
-          state.owner,
-          state.repo,
-          runs_with_jobs,
-          Map.get(state, :workflow_defs, %{})
+      with {:ok, runs} <- Client.list_workflow_runs(state.owner, state.repo, head_sha: state.ref),
+           runs_with_jobs <- fetch_jobs_for_runs(state.owner, state.repo, runs) do
+        WideEvent.add(workflow_runs_count: length(runs), jobs_fetched: true)
+
+        {runs_with_needs, workflow_defs} =
+          resolve_all_job_needs(
+            state.owner,
+            state.repo,
+            runs_with_jobs,
+            Map.get(state, :workflow_defs, %{})
+          )
+
+        %{nodes: nodes, edges: edges} = WorkflowGraph.build_workflow_dag(runs_with_needs)
+        workflow_runs = WorkflowGraph.serialize_workflow_runs(runs_with_needs)
+
+        graph_data = %{nodes: nodes, edges: edges, workflow_runs: workflow_runs}
+        state_changed = graph_data != state.last_state
+
+        WideEvent.add(
+          nodes_count: length(nodes),
+          edges_count: length(edges),
+          state_changed: state_changed
         )
 
-      %{nodes: nodes, edges: edges} = WorkflowGraph.build_workflow_dag(runs_with_needs)
-      workflow_runs = WorkflowGraph.serialize_workflow_runs(runs_with_needs)
+        if state_changed do
+          Phoenix.PubSub.broadcast(
+            Greenlight.PubSub,
+            topic,
+            {:pipeline_update, graph_data}
+          )
+        end
 
-      graph_data = %{nodes: nodes, edges: edges, workflow_runs: workflow_runs}
-
-      if graph_data != state.last_state do
-        Phoenix.PubSub.broadcast(
-          Greenlight.PubSub,
-          topic,
-          {:pipeline_update, graph_data}
-        )
-      end
-
-      state
-      |> Map.put(:last_state, graph_data)
-      |> Map.put(:poll_interval, compute_interval(runs_with_needs))
-      |> Map.put(:workflow_defs, workflow_defs)
-    else
-      {:error, _reason} ->
         state
-    end
+        |> Map.put(:last_state, graph_data)
+        |> Map.put(:poll_interval, compute_interval(runs_with_needs))
+        |> Map.put(:workflow_defs, workflow_defs)
+      else
+        {:error, reason} ->
+          WideEvent.add(poll_error: inspect(reason))
+          state
+      end
+    end)
   end
 
   defp fetch_jobs_for_runs(owner, repo, runs) do

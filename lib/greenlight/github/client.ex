@@ -4,6 +4,7 @@ defmodule Greenlight.GitHub.Client do
   """
 
   alias Greenlight.GitHub.Models
+  alias Greenlight.GitHub.ReqLogger
 
   @base_url "https://api.github.com"
 
@@ -24,7 +25,7 @@ defmodule Greenlight.GitHub.Client do
         opts
       end
 
-    Req.new(opts)
+    Req.new(opts) |> ReqLogger.attach()
   end
 
   def list_workflow_runs(owner, repo, opts \\ []) do

@@ -1,5 +1,10 @@
 import Config
 
+# Allow runtime log level override (e.g., LOG_LEVEL=debug in prod)
+if log_level = System.get_env("LOG_LEVEL") do
+  config :logger, level: String.to_existing_atom(log_level)
+end
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration

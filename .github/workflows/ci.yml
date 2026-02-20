@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@v21
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Cache Mix dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: mix-${{ runner.os }}-${{ hashFiles('mix.lock') }}
+          restore-keys: |
+            mix-${{ runner.os }}-
+      - name: Run tests
+        run: nix develop --command bash -c "mix deps.get && mix format --check-formatted && mix test"
+
+  deploy:
+    name: Build & Push Container
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    needs: [test]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@v21
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build container image
+        run: nix build .#dockerImage
+      - name: Load and push container image
+        run: |
+          set -euo pipefail
+          docker load < ./result
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          docker tag ghcr.io/jordangarrison/greenlight:latest "ghcr.io/jordangarrison/greenlight:${SHORT_SHA}"
+          docker push ghcr.io/jordangarrison/greenlight:latest
+          docker push "ghcr.io/jordangarrison/greenlight:${SHORT_SHA}"
