@@ -26,6 +26,7 @@ defmodule GreenlightWeb.PipelineLive do
       pipeline_sha: sha,
       connected: connected?(socket)
     )
+
     WideEvent.emit("liveview.mounted", [], level: :debug)
 
     if connected?(socket) do

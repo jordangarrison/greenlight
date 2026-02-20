@@ -24,6 +24,7 @@ defmodule GreenlightWeb.DashboardLive do
       followed_orgs_count: length(orgs),
       connected: connected?(socket)
     )
+
     WideEvent.emit("liveview.mounted", [], level: :debug)
 
     if connected?(socket) do

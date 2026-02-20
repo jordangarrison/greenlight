@@ -25,6 +25,7 @@ defmodule GreenlightWeb.RepoLive do
       repo_name: repo,
       connected: connected?(socket)
     )
+
     WideEvent.emit("liveview.mounted", [], level: :debug)
 
     if connected?(socket) do
