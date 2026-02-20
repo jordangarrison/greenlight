@@ -9,13 +9,15 @@ defmodule Greenlight.Application do
 
   @impl true
   def start(_type, _args) do
-    # Set global environment context for all wide events
-    Logger.metadata(
-      app_version: to_string(Application.spec(:greenlight, :vsn)),
-      node: Node.self(),
-      env: Application.get_env(:greenlight, :env, :dev),
-      git_sha: System.get_env("GIT_SHA", "unknown")
-    )
+    # Set global environment context for all wide events (all processes)
+    :logger.update_primary_config(%{
+      metadata: %{
+        app_version: to_string(Application.spec(:greenlight, :vsn)),
+        node: Node.self(),
+        env: Application.get_env(:greenlight, :env, :dev),
+        git_sha: System.get_env("GIT_SHA", "unknown")
+      }
+    })
 
     # Attach HTTP request telemetry logger
     Greenlight.RequestLogger.attach()
