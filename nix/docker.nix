@@ -28,6 +28,10 @@ pkgs.dockerTools.buildLayeredImage {
     User = "${uid}:${gid}";
     Cmd = [ "/bin/server" ];
     ExposedPorts."4000/tcp" = { };
+    Labels = {
+      "org.opencontainers.image.source" = "https://github.com/jordangarrison/greenlight";
+      "org.opencontainers.image.description" = "Greenlight - GitHub Actions workflow visualizer";
+    };
     Env = [
       "PHX_SERVER=true"
       "GREENLIGHT_LISTEN_ADDRESS=0.0.0.0"
