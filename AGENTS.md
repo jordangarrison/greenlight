@@ -44,6 +44,24 @@ custom classes must fully style the input
 - Focus on **delightful details** like hover effects, loading states, and smooth page transitions
 
 
+## Structured Logging (Wide Events)
+
+This project uses structured wide event logging via `Greenlight.WideEvent` with LoggerJSON. Every logical operation emits a single JSON event with accumulated context. Use the `greenlight-debugging` skill when diagnosing issues.
+
+**Event types:**
+- `github.api_call` — Every GitHub API request (endpoint, status, duration, rate limits)
+- `poller.poll_cycle` — Each Poller GenServer poll cycle (workflow runs count, state changes, duration)
+- `liveview.mounted` — LiveView mount events (view name, params, connected status)
+- `liveview.pipeline_update` — Pipeline data broadcasts (node/edge/run counts)
+- `http.request` — Every HTTP page load (method, path, status, duration, remote IP)
+
+**Key files:**
+- `lib/greenlight/wide_event.ex` — Core module (`add/1`, `emit/3`, `with_context/3`)
+- `lib/greenlight/github/req_logger.ex` — Req plugin for GitHub API logging
+- `lib/greenlight/request_logger.ex` — Telemetry handler for HTTP requests
+
+**To view logs in development:** Run with `LOG_LEVEL=debug mix phx.server` — all output is JSON, filter with `grep '"event":"<event_type>"'`.
+
 <!-- usage-rules-start -->
 
 <!-- phoenix:elixir-start -->

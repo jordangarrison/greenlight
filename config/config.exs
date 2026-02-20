@@ -43,10 +43,11 @@ config :tailwind,
     cd: Path.expand("..", __DIR__)
   ]
 
-# Configure Elixir's Logger
-config :logger, :default_formatter,
-  format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
+# Structured JSON logging via LoggerJSON
+config :logger, :default_handler, formatter: {LoggerJSON.Formatters.Basic, metadata: :all}
+
+# Suppress default Phoenix request logging (we handle it via telemetry)
+config :phoenix, :logger, false
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
