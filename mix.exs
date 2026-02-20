@@ -63,6 +63,7 @@ defmodule Greenlight.MixProject do
       {:gettext, "~> 1.0"},
       {:yaml_elixir, "~> 2.11"},
       {:jason, "~> 1.2"},
+      {:logger_json, "~> 7.0"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"}
     ]
