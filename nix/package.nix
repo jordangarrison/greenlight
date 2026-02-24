@@ -22,7 +22,7 @@ let
   npmDeps = fetchNpmDeps {
     name = "${pname}-npm-deps";
     src = src + "/assets";
-    hash = "sha256-BLuc+yYQ0rQpAWnLa1nDk7Q8mhvcgWGVT5Ywlth8opo=";
+    hash = "sha256-4nVNhge0L/dATqmzzlInLp2nrWc5e2B5S8JBQHtmT3I=";
   };
 in
 mixRelease {
