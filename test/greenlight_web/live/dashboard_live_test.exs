@@ -78,12 +78,16 @@ defmodule GreenlightWeb.DashboardLiveTest do
   test "updates when receiving user_insights_update broadcast", %{conn: conn} do
     {view, _html} = mount_and_wait(conn)
 
-    send(view.pid, {:user_insights_update, %{
-      user: %{login: "newuser", name: "New User", avatar_url: "https://example.com/avatar.png"},
-      prs: [],
-      commits: [],
-      loading: false
-    }})
+    send(
+      view.pid,
+      {:user_insights_update,
+       %{
+         user: %{login: "newuser", name: "New User", avatar_url: "https://example.com/avatar.png"},
+         prs: [],
+         commits: [],
+         loading: false
+       }}
+    )
 
     html = render(view)
     assert html =~ "newuser"
