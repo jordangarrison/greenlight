@@ -4,6 +4,8 @@ A GitHub Actions workflow visualizer built with Phoenix LiveView. View your CI/C
 
 ![Greenlight Demo](docs/assets/greenlight-demo.gif)
 
+![Greenlight Dashboard](docs/assets/greenlight-dashboard.png)
+
 ## Features
 
 - **Interactive DAG visualization** of GitHub Actions workflows using Svelte Flow
