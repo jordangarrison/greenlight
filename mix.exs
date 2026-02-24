@@ -85,7 +85,13 @@ defmodule Greenlight.MixProject do
         "cmd --cd assets node build.js --deploy",
         "phx.digest"
       ],
-      precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
+      precommit: [
+        "compile --warnings-as-errors",
+        "deps.unlock --unused",
+        "format",
+        "test",
+        "cmd nix build .#dockerImage"
+      ]
     ]
   end
 end

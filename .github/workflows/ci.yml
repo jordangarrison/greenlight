@@ -30,11 +30,23 @@ jobs:
       - name: Run tests
         run: nix develop --command bash -c "mix deps.get && mix format --check-formatted && mix test"
 
+  build:
+    name: Nix Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@v21
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Build Nix package
+        run: nix build .#default
+      - name: Build Docker image
+        run: nix build .#dockerImage
+
   deploy:
     name: Build & Push Container
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
-    needs: [test]
+    needs: [test, build]
     permissions:
       contents: read
       packages: write

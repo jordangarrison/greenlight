@@ -1,13 +1,17 @@
 defmodule GreenlightWeb.DashboardLive do
   use GreenlightWeb, :live_view
 
-  alias Greenlight.GitHub.Client
+  alias Greenlight.GitHub.{Client, UserInsightsServer}
   alias Greenlight.WideEvent
+  import Greenlight.TimeHelpers, only: [relative_time: 1]
 
   @impl true
   def mount(_params, _session, socket) do
     bookmarked = Greenlight.Config.bookmarked_repos()
     orgs = Greenlight.Config.followed_orgs()
+
+    # Read cached user insights for instant render
+    cached = UserInsightsServer.get_cached()
 
     socket =
       assign(socket,
@@ -15,7 +19,11 @@ defmodule GreenlightWeb.DashboardLive do
         bookmarked_repos: bookmarked,
         followed_orgs: orgs,
         org_repos: %{},
-        expanded_orgs: MapSet.new()
+        expanded_orgs: MapSet.new(),
+        user: cached.user,
+        user_prs: cached.prs,
+        user_commits: cached.commits,
+        user_loading: cached.loading
       )
 
     WideEvent.add(
@@ -28,6 +36,7 @@ defmodule GreenlightWeb.DashboardLive do
     WideEvent.emit("liveview.mounted", [], level: :debug)
 
     if connected?(socket) do
+      UserInsightsServer.subscribe()
       send(self(), :load_org_repos)
     end
 
@@ -46,6 +55,17 @@ defmodule GreenlightWeb.DashboardLive do
       end)
 
     {:noreply, assign(socket, org_repos: org_repos)}
+  end
+
+  @impl true
+  def handle_info({:user_insights_update, data}, socket) do
+    {:noreply,
+     assign(socket,
+       user: data.user,
+       user_prs: data.prs,
+       user_commits: data.commits,
+       user_loading: data.loading
+     )}
   end
 
   @impl true
@@ -68,6 +88,113 @@ defmodule GreenlightWeb.DashboardLive do
         <h1 class="text-4xl font-bold uppercase tracking-wider text-white mb-10">
           Dashboard
         </h1>
+
+        <%!-- User Insights Section --%>
+        <section class="mb-12">
+          <%!-- Loading state --%>
+          <div :if={@user_loading} class="nb-card p-6 mb-6">
+            <div class="flex items-center gap-4 animate-pulse">
+              <div class="w-10 h-10 bg-[var(--gl-border)] rounded-full" />
+              <div class="h-4 w-48 bg-[var(--gl-border)]" />
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div :for={_ <- 1..2} class="space-y-3">
+                <div class="h-3 w-32 bg-[var(--gl-border)]" />
+                <div :for={_ <- 1..3} class="h-10 bg-[var(--gl-border)]" />
+              </div>
+            </div>
+          </div>
+
+          <%!-- Loaded state --%>
+          <div :if={@user != nil and not @user_loading}>
+            <%!-- Compact profile bar --%>
+            <div class="flex items-center gap-3 mb-6">
+              <img
+                src={@user.avatar_url}
+                alt={@user.login}
+                class="w-10 h-10 rounded-full border-2 border-[var(--gl-accent)]"
+              />
+              <div>
+                <span class="text-lg font-bold text-white">{@user.login}</span>
+                <span :if={@user.name} class="text-sm text-[var(--gl-text-muted)] ml-2">
+                  {" · "}{@user.name}
+                </span>
+              </div>
+            </div>
+
+            <%!-- Two-column grid: PRs and Commits --%>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <%!-- Recent PRs column --%>
+              <div>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-[var(--gl-accent)] mb-3 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 bg-[var(--gl-accent)]" /> Recent Pull Requests
+                </h3>
+                <div :if={@user_prs == []} class="text-sm text-[var(--gl-text-muted)] py-4">
+                  No recent pull requests
+                </div>
+                <div class="space-y-2">
+                  <.link
+                    :for={pr <- @user_prs}
+                    navigate={"/repos/#{pr.repo}/pull/#{pr.number}"}
+                    class="nb-card-muted block p-3 group"
+                  >
+                    <div class="flex items-start justify-between gap-2">
+                      <div class="min-w-0 flex-1">
+                        <span class="text-xs text-[var(--gl-text-muted)] block">{pr.repo}</span>
+                        <span class="text-sm text-white font-bold group-hover:text-[var(--gl-accent)] transition-colors block truncate">
+                          {pr.title}
+                        </span>
+                      </div>
+                      <span class={[
+                        "text-xs px-1.5 py-0.5 border font-bold shrink-0",
+                        if(pr.state == "open",
+                          do: "text-[var(--gl-status-success)] border-[var(--gl-status-success)]",
+                          else: "text-[var(--gl-text-muted)] border-[var(--gl-border)]"
+                        )
+                      ]}>
+                        {pr.state}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-1 text-xs text-[var(--gl-text-muted)]">
+                      <span>#{pr.number}</span>
+                      <span>·</span>
+                      <span>{relative_time(pr.updated_at)}</span>
+                    </div>
+                  </.link>
+                </div>
+              </div>
+
+              <%!-- Recent Commits column --%>
+              <div>
+                <h3 class="text-sm font-bold uppercase tracking-wider text-[var(--gl-accent)] mb-3 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 bg-[var(--gl-accent)]" /> Recent Commits
+                </h3>
+                <div :if={@user_commits == []} class="text-sm text-[var(--gl-text-muted)] py-4">
+                  No recent commits
+                </div>
+                <div class="space-y-2">
+                  <.link
+                    :for={commit <- @user_commits}
+                    navigate={"/repos/#{commit.repo}/commit/#{commit.sha}"}
+                    class="nb-card-muted block p-3 group"
+                  >
+                    <div class="min-w-0">
+                      <span class="text-xs text-[var(--gl-text-muted)] block">{commit.repo}</span>
+                      <span class="text-sm text-white font-bold group-hover:text-[var(--gl-accent)] transition-colors block truncate">
+                        {commit.message}
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-1 text-xs text-[var(--gl-text-muted)]">
+                      <span>{String.slice(commit.sha, 0, 7)}</span>
+                      <span>·</span>
+                      <span>{relative_time(commit.authored_at)}</span>
+                    </div>
+                  </.link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section :if={@bookmarked_repos != []} class="mb-12">
           <h2 class="text-lg font-bold uppercase tracking-wider text-[var(--gl-accent)] mb-6 flex items-center gap-2">
