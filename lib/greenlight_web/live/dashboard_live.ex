@@ -1,7 +1,7 @@
 defmodule GreenlightWeb.DashboardLive do
   use GreenlightWeb, :live_view
 
-  alias Greenlight.GitHub.Client
+  alias Greenlight.GitHub.{Client, UserInsightsServer}
   alias Greenlight.WideEvent
   import Greenlight.TimeHelpers, only: [relative_time: 1]
 
@@ -10,6 +10,9 @@ defmodule GreenlightWeb.DashboardLive do
     bookmarked = Greenlight.Config.bookmarked_repos()
     orgs = Greenlight.Config.followed_orgs()
 
+    # Read cached user insights for instant render
+    cached = UserInsightsServer.get_cached()
+
     socket =
       assign(socket,
         page_title: "Dashboard",
@@ -17,10 +20,10 @@ defmodule GreenlightWeb.DashboardLive do
         followed_orgs: orgs,
         org_repos: %{},
         expanded_orgs: MapSet.new(),
-        user: nil,
-        user_prs: [],
-        user_commits: [],
-        user_loading: true
+        user: cached.user,
+        user_prs: cached.prs,
+        user_commits: cached.commits,
+        user_loading: cached.loading
       )
 
     WideEvent.add(
@@ -33,8 +36,8 @@ defmodule GreenlightWeb.DashboardLive do
     WideEvent.emit("liveview.mounted", [], level: :debug)
 
     if connected?(socket) do
+      UserInsightsServer.subscribe()
       send(self(), :load_org_repos)
-      send(self(), :load_user)
     end
 
     {:ok, socket}
@@ -55,37 +58,14 @@ defmodule GreenlightWeb.DashboardLive do
   end
 
   @impl true
-  def handle_info(:load_user, socket) do
-    case Client.get_authenticated_user() do
-      {:ok, user} ->
-        send(self(), :load_user_activity)
-        {:noreply, assign(socket, user: user)}
-
-      {:error, _} ->
-        {:noreply, assign(socket, user_loading: false)}
-    end
-  end
-
-  @impl true
-  def handle_info(:load_user_activity, socket) do
-    username = socket.assigns.user.login
-
-    prs_task = Task.async(fn -> Client.search_user_prs(username) end)
-    commits_task = Task.async(fn -> Client.search_user_commits(username) end)
-
-    prs =
-      case Task.await(prs_task) do
-        {:ok, prs} -> prs
-        {:error, _} -> []
-      end
-
-    commits =
-      case Task.await(commits_task) do
-        {:ok, commits} -> commits
-        {:error, _} -> []
-      end
-
-    {:noreply, assign(socket, user_prs: prs, user_commits: commits, user_loading: false)}
+  def handle_info({:user_insights_update, data}, socket) do
+    {:noreply,
+     assign(socket,
+       user: data.user,
+       user_prs: data.prs,
+       user_commits: data.commits,
+       user_loading: data.loading
+     )}
   end
 
   @impl true
@@ -153,11 +133,9 @@ defmodule GreenlightWeb.DashboardLive do
                   No recent pull requests
                 </div>
                 <div class="space-y-2">
-                  <a
+                  <.link
                     :for={pr <- @user_prs}
-                    href={pr.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    navigate={"/repos/#{pr.repo}/pull/#{pr.number}"}
                     class="nb-card-muted block p-3 group"
                   >
                     <div class="flex items-start justify-between gap-2">
@@ -182,7 +160,7 @@ defmodule GreenlightWeb.DashboardLive do
                       <span>·</span>
                       <span>{relative_time(pr.updated_at)}</span>
                     </div>
-                  </a>
+                  </.link>
                 </div>
               </div>
 
@@ -195,11 +173,9 @@ defmodule GreenlightWeb.DashboardLive do
                   No recent commits
                 </div>
                 <div class="space-y-2">
-                  <a
+                  <.link
                     :for={commit <- @user_commits}
-                    href={commit.html_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    navigate={"/repos/#{commit.repo}/commit/#{commit.sha}"}
                     class="nb-card-muted block p-3 group"
                   >
                     <div class="min-w-0">
@@ -213,7 +189,7 @@ defmodule GreenlightWeb.DashboardLive do
                       <span>·</span>
                       <span>{relative_time(commit.authored_at)}</span>
                     </div>
-                  </a>
+                  </.link>
                 </div>
               </div>
             </div>

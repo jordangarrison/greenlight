@@ -22,6 +22,8 @@ defmodule Greenlight.Application do
     # Attach HTTP request telemetry logger
     Greenlight.RequestLogger.attach()
 
+    Greenlight.Cache.init()
+
     children = [
       {NodeJS.Supervisor,
        [
@@ -33,6 +35,7 @@ defmodule Greenlight.Application do
       {Phoenix.PubSub, name: Greenlight.PubSub},
       {Registry, keys: :unique, name: Greenlight.PollerRegistry},
       {DynamicSupervisor, name: Greenlight.PollerSupervisor, strategy: :one_for_one},
+      Greenlight.GitHub.UserInsightsServer,
       # Start to serve requests, typically the last entry
       GreenlightWeb.Endpoint
     ]

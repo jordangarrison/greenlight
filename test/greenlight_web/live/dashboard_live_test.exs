@@ -2,63 +2,58 @@ defmodule GreenlightWeb.DashboardLiveTest do
   use GreenlightWeb.ConnCase, async: false
   import Phoenix.LiveViewTest
 
+  alias Greenlight.Cache
+
   setup do
+    # Ensure the cache table exists for tests
+    Cache.init()
+
+    # Stub org repos endpoint for dashboard mount
     Req.Test.stub(Greenlight.GitHub.Client, fn conn ->
       case conn.request_path do
-        "/user" ->
-          Req.Test.json(conn, %{
-            "login" => "testuser",
-            "name" => "Test User",
-            "avatar_url" => "https://avatars.githubusercontent.com/u/12345"
-          })
-
-        "/search/issues" ->
-          Req.Test.json(conn, %{
-            "items" => [
-              %{
-                "number" => 42,
-                "title" => "Add feature X",
-                "state" => "open",
-                "html_url" => "https://github.com/owner/repo/pull/42",
-                "updated_at" => "2026-02-19T10:00:00Z",
-                "repository_url" => "https://api.github.com/repos/owner/repo"
-              }
-            ]
-          })
-
-        "/search/commits" ->
-          Req.Test.json(conn, %{
-            "items" => [
-              %{
-                "sha" => "abc1234567890",
-                "html_url" => "https://github.com/owner/repo/commit/abc1234567890",
-                "commit" => %{
-                  "message" => "Fix the thing",
-                  "author" => %{"date" => "2026-02-19T09:00:00Z"}
-                },
-                "repository" => %{"full_name" => "owner/repo"}
-              }
-            ]
-          })
-
         "/orgs/" <> _ ->
           Req.Test.json(conn, [])
+
+        _ ->
+          Req.Test.json(conn, %{})
       end
     end)
+
+    # Seed the cache with user insights data so the dashboard renders instantly
+    Cache.put(:user_insights, %{
+      user: %{
+        login: "testuser",
+        name: "Test User",
+        avatar_url: "https://avatars.githubusercontent.com/u/12345"
+      },
+      prs: [
+        %{
+          number: 42,
+          title: "Add feature X",
+          state: "open",
+          html_url: "https://github.com/owner/repo/pull/42",
+          updated_at: "2026-02-19T10:00:00Z",
+          repo: "owner/repo"
+        }
+      ],
+      commits: [
+        %{
+          sha: "abc1234567890",
+          html_url: "https://github.com/owner/repo/commit/abc1234567890",
+          message: "Fix the thing",
+          authored_at: "2026-02-19T09:00:00Z",
+          repo: "owner/repo"
+        }
+      ],
+      loading: false
+    })
 
     :ok
   end
 
-  # Mount the LiveView and wait for all async data to load.
-  # The mount sends :load_org_repos and :load_user, then :load_user sends
-  # :load_user_activity. We need two sync points to ensure all chained
-  # messages are processed before rendering.
   defp mount_and_wait(conn) do
     {:ok, view, _html} = live(conn, "/")
-    # First sync: waits for :load_org_repos and :load_user to complete.
-    # :load_user sends :load_user_activity to self, which is now queued.
-    _ = :sys.get_state(view.pid)
-    # Second sync: waits for :load_user_activity to complete.
+    # Sync: wait for :load_org_repos to complete
     _ = :sys.get_state(view.pid)
     {view, render(view)}
   end
@@ -78,5 +73,20 @@ defmodule GreenlightWeb.DashboardLiveTest do
     {_view, html} = mount_and_wait(conn)
     assert html =~ "Fix the thing"
     assert html =~ "abc1234"
+  end
+
+  test "updates when receiving user_insights_update broadcast", %{conn: conn} do
+    {view, _html} = mount_and_wait(conn)
+
+    send(view.pid, {:user_insights_update, %{
+      user: %{login: "newuser", name: "New User", avatar_url: "https://example.com/avatar.png"},
+      prs: [],
+      commits: [],
+      loading: false
+    }})
+
+    html = render(view)
+    assert html =~ "newuser"
+    refute html =~ "testuser"
   end
 end
