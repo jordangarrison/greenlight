@@ -94,10 +94,18 @@ if config_env() == :prod do
   scheme = System.get_env("PHX_SCHEME", "https")
   url_port = String.to_integer(System.get_env("PHX_URL_PORT", "443"))
 
+  check_origin =
+    case System.get_env("PHX_CHECK_ORIGIN") do
+      nil -> true
+      "false" -> false
+      origins -> String.split(origins, ",", trim: true) |> Enum.map(&String.trim/1)
+    end
+
   config :greenlight, GreenlightWeb.Endpoint,
     url: [host: host, port: url_port, scheme: scheme],
     http: [ip: listen_ip, port: port],
-    secret_key_base: secret_key_base
+    secret_key_base: secret_key_base,
+    check_origin: check_origin
 
   if scheme == "https" do
     config :greenlight, GreenlightWeb.Endpoint, force_ssl: [rewrite_on: [:x_forwarded_proto]]

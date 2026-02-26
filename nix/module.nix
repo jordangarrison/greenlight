@@ -54,6 +54,17 @@ in
       description = "GitHub organizations to follow.";
     };
 
+    allowedOrigins = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      example = [ "//*.ts.net" "//myhost:4444" ];
+      description = ''
+        List of origin patterns to allow for WebSocket connections (PHX_CHECK_ORIGIN).
+        Supports wildcards like "//*.ts.net". If empty, Phoenix defaults to
+        checking against the configured host. Set to ["false"] to disable origin checking.
+      '';
+    };
+
     dnsClusterQuery = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
@@ -167,6 +178,8 @@ in
         GREENLIGHT_FOLLOWED_ORGS = lib.concatStringsSep "," cfg.followedOrgs;
       } // lib.optionalAttrs (cfg.dnsClusterQuery != null) {
         DNS_CLUSTER_QUERY = cfg.dnsClusterQuery;
+      } // lib.optionalAttrs (cfg.allowedOrigins != [ ]) {
+        PHX_CHECK_ORIGIN = lib.concatStringsSep "," cfg.allowedOrigins;
       };
 
       script = ''
