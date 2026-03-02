@@ -32,6 +32,12 @@
   // Client-only state — never reset by server updates
   let expandedWorkflows = $state(new Set());
 
+  // Controls when FitViewHelper calls fitView(). Incremented on:
+  //   - initial data load (nodes first appear)
+  //   - user expand/collapse actions
+  // Never incremented by server poll updates.
+  let fitTrigger = $state(0);
+
   // Listen for server data updates pushed via push_event (bypasses DOM patching)
   if (live) {
     live.handleEvent("pipeline_data", ({ nodes, edges, workflow_runs }) => {
@@ -41,6 +47,13 @@
     });
   }
 
+  // Trigger initial fitView when nodes first appear
+  $effect(() => {
+    if (serverNodes.length > 0 && fitTrigger === 0) {
+      fitTrigger = 1;
+    }
+  });
+
   function toggleWorkflow(runId) {
     const next = new Set(expandedWorkflows);
     if (next.has(runId)) {
@@ -49,6 +62,7 @@
       next.add(runId);
     }
     expandedWorkflows = next;
+    fitTrigger++;
   }
 
   function buildJobNodesAndEdges(workflowRun) {
@@ -298,7 +312,7 @@
     {defaultEdgeOptions}
     colorMode="dark"
   >
-    <FitViewHelper nodeCount={layoutedNodes.length} />
+    <FitViewHelper {fitTrigger} />
     <Background bgColor="var(--gl-bg-primary)" gap={20} color="var(--gl-border)" />
     <Controls />
     <MiniMap
