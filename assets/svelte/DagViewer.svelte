@@ -6,7 +6,15 @@
   import PipelineNode from './nodes/PipelineNode.svelte';
   import FitViewHelper from './FitViewHelper.svelte';
 
-  let { nodes = [], edges = [], workflow_runs = [], pipeline_label = "", pipeline_sublabel = "" } = $props();
+  // Props: initial server data + static labels + LiveSvelte hook ref
+  let {
+    nodes: initialNodes = [],
+    edges: initialEdges = [],
+    workflow_runs: initialWorkflowRuns = [],
+    pipeline_label = "",
+    pipeline_sublabel = "",
+    live
+  } = $props();
 
   const nodeTypes = {
     workflow: WorkflowNode,
@@ -14,7 +22,24 @@
     pipeline: PipelineNode
   };
 
+  // Server-owned data — initialized from props, then updated only via push_event.
+  // This separates server data from the LiveView re-render cycle so that
+  // updating data never destroys/recreates the Svelte component or its DOM.
+  let serverNodes = $state(initialNodes);
+  let serverEdges = $state(initialEdges);
+  let serverWorkflowRuns = $state(initialWorkflowRuns);
+
+  // Client-only state — never reset by server updates
   let expandedWorkflows = $state(new Set());
+
+  // Listen for server data updates pushed via push_event (bypasses DOM patching)
+  if (live) {
+    live.handleEvent("pipeline_data", ({ nodes, edges, workflow_runs }) => {
+      serverNodes = nodes;
+      serverEdges = edges;
+      serverWorkflowRuns = workflow_runs;
+    });
+  }
 
   function toggleWorkflow(runId) {
     const next = new Set(expandedWorkflows);
@@ -89,9 +114,9 @@
     };
   }
 
-  // Mark workflow nodes with expanded state
+  // Mark workflow nodes with expanded state (uses server data, not props)
   const workflowNodesWithExpanded = $derived(
-    nodes.map(n => {
+    serverNodes.map(n => {
       if (n.type === 'workflow') {
         const runId = parseInt(n.id.replace('wf-', ''));
         return { ...n, data: { ...n.data, expanded: expandedWorkflows.has(runId) } };
@@ -100,13 +125,13 @@
     })
   );
 
-  // Merge expanded job nodes/edges into the base graph
+  // Merge expanded job nodes/edges into the base graph (uses server data, not props)
   const mergedGraph = $derived.by(() => {
     let allNodes = [...workflowNodesWithExpanded];
-    let allEdges = [...edges];
+    let allEdges = [...serverEdges];
 
     for (const runId of expandedWorkflows) {
-      const wfRun = workflow_runs.find(r => r.id === runId);
+      const wfRun = serverWorkflowRuns.find(r => r.id === runId);
       if (wfRun) {
         const { nodes: jobNodes, edges: jobEdges } = buildJobNodesAndEdges(wfRun);
         allNodes = [...allNodes, ...jobNodes];
@@ -188,7 +213,48 @@
   }
 
   const withRoot = $derived(addRootNode(mergedGraph.nodes, mergedGraph.edges));
-  const layoutedNodes = $derived(getLayoutedElements(withRoot.nodes, withRoot.edges));
+
+  // Cache dagre layout positions — only recalculate when graph STRUCTURE changes
+  // (nodes added/removed, edges changed), not on data-only updates (status, elapsed).
+  // This prevents SvelteFlow from seeing new node positions on every poll cycle,
+  // which would reset the viewport.
+  let _prevStructureKey = '';
+  let _cachedPositions = new Map();
+
+  const layoutedNodes = $derived.by(() => {
+    const currentNodes = withRoot.nodes;
+    const currentEdges = withRoot.edges;
+
+    // Fingerprint the graph topology (node IDs + edge connections)
+    const nodeIds = currentNodes.map(n => n.id).sort().join(',');
+    const edgeKeys = currentEdges.map(e => `${e.source}->${e.target}`).sort().join(',');
+    const structureKey = `${nodeIds}|${edgeKeys}`;
+
+    if (structureKey !== _prevStructureKey) {
+      // Structure changed (expand/collapse, new workflow appeared) — full dagre layout
+      _prevStructureKey = structureKey;
+      const layouted = getLayoutedElements(currentNodes, currentEdges);
+      _cachedPositions = new Map();
+      layouted.forEach(n => {
+        _cachedPositions.set(n.id, {
+          position: n.position,
+          width: n.width,
+          height: n.height,
+          style: n.style
+        });
+      });
+      return layouted;
+    }
+
+    // Same structure — reuse cached positions, merge with updated node data
+    return currentNodes.map(node => {
+      const cached = _cachedPositions.get(node.id);
+      if (cached) {
+        return { ...node, ...cached };
+      }
+      return node;
+    });
+  });
 
   const styledEdges = $derived(withRoot.edges.map(edge => {
     const isConnector = edge.data?.type === 'wf-job-connector';
@@ -208,6 +274,8 @@
     };
   }));
 
+  const defaultEdgeOptions = { type: 'smoothstep' };
+
   function handleNodeClick({ node, event }) {
     if (node.type === 'workflow') {
       const runId = parseInt(node.id.replace('wf-', ''));
@@ -223,13 +291,11 @@
     nodes={layoutedNodes}
     edges={styledEdges}
     {nodeTypes}
-    fitView
-    fitViewOptions={{ padding: 0.05 }}
     onnodeclick={handleNodeClick}
     nodesDraggable={false}
     nodesConnectable={false}
     elementsSelectable={true}
-    defaultEdgeOptions={{ type: 'smoothstep' }}
+    {defaultEdgeOptions}
     colorMode="dark"
   >
     <FitViewHelper nodeCount={layoutedNodes.length} />

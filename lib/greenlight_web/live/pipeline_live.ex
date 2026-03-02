@@ -126,7 +126,12 @@ defmodule GreenlightWeb.PipelineLive do
       level: :debug
     )
 
-    {:noreply, assign(socket, nodes: nodes, edges: edges, workflow_runs: workflow_runs)}
+    {:noreply,
+     push_event(socket, "pipeline_data", %{
+       nodes: nodes,
+       edges: edges,
+       workflow_runs: workflow_runs
+     })}
   end
 
   @impl true
