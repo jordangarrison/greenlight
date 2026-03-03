@@ -65,7 +65,8 @@ defmodule Greenlight.MixProject do
       {:jason, "~> 1.2"},
       {:logger_json, "~> 7.0"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:ash, "~> 3.19"}
     ]
   end
 
