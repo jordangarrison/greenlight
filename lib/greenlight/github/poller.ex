@@ -8,6 +8,7 @@ defmodule Greenlight.GitHub.Poller do
   require Logger
 
   alias Greenlight.GitHub.{Client, WorkflowGraph}
+  alias Greenlight.GitHub, as: GitHubDomain
   alias Greenlight.WideEvent
 
   @active_interval 10_000
@@ -109,7 +110,7 @@ defmodule Greenlight.GitHub.Poller do
       topic = "pipeline:#{state.owner}/#{state.repo}:#{state.ref}"
       WideEvent.add(subscriber_count: state.subscriber_count, poll_topic: topic)
 
-      with {:ok, runs} <- Client.list_workflow_runs(state.owner, state.repo, head_sha: state.ref),
+      with {:ok, runs} <- GitHubDomain.list_workflow_runs(state.owner, state.repo, %{head_sha: state.ref}),
            runs_with_jobs <- fetch_jobs_for_runs(state.owner, state.repo, runs) do
         WideEvent.add(workflow_runs_count: length(runs), jobs_fetched: true)
 
@@ -155,7 +156,7 @@ defmodule Greenlight.GitHub.Poller do
 
   defp fetch_jobs_for_runs(owner, repo, runs) do
     Enum.map(runs, fn run ->
-      case Client.list_jobs(owner, repo, run.id) do
+      case GitHubDomain.list_jobs(owner, repo, run.id) do
         {:ok, jobs} -> %{run | jobs: jobs}
         {:error, _} -> run
       end
