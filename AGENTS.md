@@ -44,6 +44,47 @@ custom classes must fully style the input
 - Focus on **delightful details** like hover effects, loading states, and smooth page transitions
 
 
+## Ash Framework (Data Layer)
+
+This project uses [Ash Framework](https://ash-hq.org/) 3.19 as a declarative data layer for all GitHub API data. **All GitHub data access goes through the `Greenlight.GitHub` Ash Domain** — never call `GitHub.Client` directly from LiveViews or GenServers.
+
+**Architecture:**
+```
+LiveViews / GenServers
+        ↓
+  Greenlight.GitHub (Ash Domain — code interface)
+        ↓
+  ManualRead Actions (data shaping, lib/greenlight/github/actions/)
+        ↓
+  GitHub.Client (HTTP transport — returns raw maps)
+        ↓
+  GitHub REST API
+```
+
+**Resources:** `WorkflowRun`, `Job`, `Step` (embedded), `Repository`, `Pull`, `Branch`, `Release`, `User`, `UserPR`, `UserCommit`
+
+**Domain functions (examples):**
+- `Greenlight.GitHub.list_workflow_runs(owner, repo)` — returns `{:ok, [%WorkflowRun{}]}`
+- `Greenlight.GitHub.list_workflow_runs!(owner, repo)` — bang version, raises on error
+- `Greenlight.GitHub.list_jobs(owner, repo, run_id)`
+- `Greenlight.GitHub.list_pulls(owner, repo)`
+- `Greenlight.GitHub.get_authenticated_user()` — returns `{:ok, [%User{}]}`
+
+**Key rules:**
+- **Always** call through the domain (`Greenlight.GitHub.*`), **never** call `Client.*` from LiveViews or GenServers
+- `Client` is a pure HTTP transport layer — it returns raw API maps with string keys
+- Optional action arguments (e.g., `head_sha`, `event`, `per_page`) must be passed as a **map**, not keyword opts: `Greenlight.GitHub.list_workflow_runs(owner, repo, %{head_sha: sha})`
+- Keyword opts on domain functions are reserved for Ash options (`:load`, `:actor`, etc.)
+- Only embedded resources (like `Step`) can be used as `{:array, Resource}` attribute types — domain-backed resources use `{:array, :map}`
+
+**Key files:**
+- `lib/greenlight/github/domain.ex` — Ash Domain with all code interfaces
+- `lib/greenlight/github/*.ex` — Ash resource definitions
+- `lib/greenlight/github/actions/*.ex` — ManualRead action modules
+- `lib/greenlight/github/client.ex` — HTTP transport (raw maps)
+
+**Design doc:** `docs/plans/2026-03-03-ash-data-layer-design.md`
+
 ## Nix build & dependency management
 
 This project is packaged with Nix (`nix/package.nix`) and deployed as a Docker image (`nix/docker.nix`). The Nix package uses `fetchMixDeps` with a **pinned hash** for reproducibility.
