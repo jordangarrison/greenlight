@@ -14,7 +14,7 @@ defmodule Greenlight.GitHub.Actions.GetWorkflowRun do
       {:ok, runs} ->
         ash_runs =
           runs
-          |> Enum.filter(&(&1.id == run_id))
+          |> Enum.filter(&(&1["id"] == run_id))
           |> Enum.map(&to_resource(&1, owner, repo))
 
         {:ok, ash_runs}
@@ -26,17 +26,17 @@ defmodule Greenlight.GitHub.Actions.GetWorkflowRun do
 
   defp to_resource(run, owner, repo) do
     %Greenlight.GitHub.WorkflowRun{
-      id: run.id,
-      name: run.name,
-      workflow_id: run.workflow_id,
-      status: Parsing.parse_status(run.status),
-      conclusion: Parsing.parse_conclusion(run.conclusion),
-      head_sha: run.head_sha,
-      event: run.event,
-      html_url: run.html_url,
-      path: run.path,
-      created_at: Parsing.parse_datetime(run.created_at),
-      updated_at: Parsing.parse_datetime(run.updated_at),
+      id: run["id"],
+      name: run["name"],
+      workflow_id: run["workflow_id"],
+      status: Parsing.parse_status(run["status"]),
+      conclusion: Parsing.parse_conclusion(run["conclusion"]),
+      head_sha: run["head_sha"],
+      event: run["event"],
+      html_url: run["html_url"],
+      path: run["path"],
+      created_at: Parsing.parse_datetime(run["created_at"]),
+      updated_at: Parsing.parse_datetime(run["updated_at"]),
       owner: owner,
       repo: repo,
       jobs: []

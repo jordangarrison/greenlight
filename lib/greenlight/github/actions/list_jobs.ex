@@ -22,28 +22,36 @@ defmodule Greenlight.GitHub.Actions.ListJobs do
 
   defp to_resource(job, owner, repo, run_id) do
     steps =
-      Enum.map(job.steps, fn step ->
+      Enum.map(job["steps"] || [], fn step ->
         %Greenlight.GitHub.Step{
-          name: step.name,
-          status: Parsing.parse_status(step.status),
-          conclusion: Parsing.parse_conclusion(step.conclusion),
-          number: step.number,
-          started_at: Parsing.parse_datetime(step.started_at),
-          completed_at: Parsing.parse_datetime(step.completed_at)
+          name: step["name"],
+          status: Parsing.parse_status(step["status"]),
+          conclusion: Parsing.parse_conclusion(step["conclusion"]),
+          number: step["number"],
+          started_at: Parsing.parse_datetime(step["started_at"]),
+          completed_at: Parsing.parse_datetime(step["completed_at"])
         }
       end)
 
+    current_step =
+      steps
+      |> Enum.find(&(&1.status == :in_progress))
+      |> case do
+        nil -> nil
+        step -> step.name
+      end
+
     %Greenlight.GitHub.Job{
-      id: job.id,
-      name: job.name,
-      status: Parsing.parse_status(job.status),
-      conclusion: Parsing.parse_conclusion(job.conclusion),
-      started_at: Parsing.parse_datetime(job.started_at),
-      completed_at: Parsing.parse_datetime(job.completed_at),
-      current_step: job.current_step,
-      html_url: job.html_url,
+      id: job["id"],
+      name: job["name"],
+      status: Parsing.parse_status(job["status"]),
+      conclusion: Parsing.parse_conclusion(job["conclusion"]),
+      started_at: Parsing.parse_datetime(job["started_at"]),
+      completed_at: Parsing.parse_datetime(job["completed_at"]),
+      current_step: current_step,
+      html_url: job["html_url"],
       steps: steps,
-      needs: job.needs || [],
+      needs: [],
       owner: owner,
       repo: repo,
       run_id: run_id
