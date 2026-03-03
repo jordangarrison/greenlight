@@ -1,7 +1,7 @@
 defmodule GreenlightWeb.DashboardLive do
   use GreenlightWeb, :live_view
 
-  alias Greenlight.GitHub.{Client, UserInsightsServer}
+  alias Greenlight.GitHub.UserInsightsServer
   alias Greenlight.WideEvent
   import Greenlight.TimeHelpers, only: [relative_time: 1]
 
@@ -48,7 +48,7 @@ defmodule GreenlightWeb.DashboardLive do
     org_repos =
       socket.assigns.followed_orgs
       |> Enum.reduce(%{}, fn org, acc ->
-        case Client.list_org_repos(org) do
+        case Greenlight.GitHub.list_org_repos(org) do
           {:ok, repos} -> Map.put(acc, org, repos)
           {:error, _} -> Map.put(acc, org, [])
         end
@@ -243,14 +243,14 @@ defmodule GreenlightWeb.DashboardLive do
             <div :if={MapSet.member?(@expanded_orgs, org)} class="mt-2 ml-6 space-y-2">
               <.link
                 :for={repo <- Map.get(@org_repos, org, [])}
-                navigate={"/repos/#{repo}"}
+                navigate={"/repos/#{repo.full_name}"}
                 class="nb-card-muted block p-3"
               >
                 <span
                   class="text-sm text-[var(--gl-text-body)]"
                   style="font-family: var(--gl-font-mono);"
                 >
-                  {repo}
+                  {repo.full_name}
                 </span>
               </.link>
             </div>

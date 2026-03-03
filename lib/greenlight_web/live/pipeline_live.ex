@@ -2,7 +2,6 @@ defmodule GreenlightWeb.PipelineLive do
   use GreenlightWeb, :live_view
 
   alias Greenlight.Pollers
-  alias Greenlight.GitHub.Client
   alias Greenlight.WideEvent
 
   @impl true
@@ -53,7 +52,7 @@ defmodule GreenlightWeb.PipelineLive do
 
   # PR route - look up the head SHA from the PR number
   def mount(%{"owner" => owner, "repo" => repo, "number" => number}, session, socket) do
-    case Client.list_pulls(owner, repo) do
+    case Greenlight.GitHub.list_pulls(owner, repo) do
       {:ok, pulls} ->
         pr = Enum.find(pulls, fn p -> p.number == String.to_integer(number) end)
 
@@ -83,7 +82,7 @@ defmodule GreenlightWeb.PipelineLive do
 
   # Release route - look up the tag SHA
   def mount(%{"owner" => owner, "repo" => repo, "tag" => tag}, session, socket) do
-    case Client.list_workflow_runs(owner, repo, event: "release") do
+    case Greenlight.GitHub.list_workflow_runs(owner, repo, %{event: "release"}) do
       {:ok, runs} ->
         run = Enum.find(runs, fn r -> r.head_sha end)
 
