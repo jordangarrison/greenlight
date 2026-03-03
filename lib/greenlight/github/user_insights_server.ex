@@ -9,7 +9,6 @@ defmodule Greenlight.GitHub.UserInsightsServer do
   use GenServer
   require Logger
 
-  alias Greenlight.GitHub.Client
   alias Greenlight.{Cache, WideEvent}
 
   @poll_interval :timer.minutes(5)
@@ -65,10 +64,10 @@ defmodule Greenlight.GitHub.UserInsightsServer do
   end
 
   defp fetch_user_insights do
-    case Client.get_authenticated_user() do
-      {:ok, user} ->
-        prs_task = Task.async(fn -> Client.search_user_prs(user.login) end)
-        commits_task = Task.async(fn -> Client.search_user_commits(user.login) end)
+    case Greenlight.GitHub.get_authenticated_user() do
+      {:ok, [user | _]} ->
+        prs_task = Task.async(fn -> Greenlight.GitHub.list_user_prs(user.login) end)
+        commits_task = Task.async(fn -> Greenlight.GitHub.list_user_commits(user.login) end)
 
         prs =
           case Task.await(prs_task) do
@@ -84,7 +83,7 @@ defmodule Greenlight.GitHub.UserInsightsServer do
 
         %{user: user, prs: prs, commits: commits, loading: false}
 
-      {:error, _} ->
+      _ ->
         %{user: nil, prs: [], commits: [], loading: false}
     end
   end
