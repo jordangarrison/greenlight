@@ -8,11 +8,11 @@ defmodule Greenlight.GitHub.Step do
     data_layer: :embedded
 
   attributes do
-    attribute :name, :string, public?: true
-    attribute :status, :atom, public?: true
-    attribute :conclusion, :atom, public?: true
-    attribute :number, :integer, public?: true
-    attribute :started_at, :utc_datetime, public?: true
-    attribute :completed_at, :utc_datetime, public?: true
+    attribute(:name, :string, public?: true)
+    attribute(:status, :atom, public?: true)
+    attribute(:conclusion, :atom, public?: true)
+    attribute(:number, :integer, public?: true)
+    attribute(:started_at, :utc_datetime, public?: true)
+    attribute(:completed_at, :utc_datetime, public?: true)
   end
 end

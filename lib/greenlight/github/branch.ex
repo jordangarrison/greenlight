@@ -7,16 +7,16 @@ defmodule Greenlight.GitHub.Branch do
     domain: Greenlight.GitHub
 
   attributes do
-    attribute :name, :string, primary_key?: true, allow_nil?: false, public?: true
-    attribute :sha, :string, public?: true
+    attribute(:name, :string, primary_key?: true, allow_nil?: false, public?: true)
+    attribute(:sha, :string, public?: true)
   end
 
   actions do
     read :list do
-      argument :owner, :string, allow_nil?: false
-      argument :repo, :string, allow_nil?: false
+      argument(:owner, :string, allow_nil?: false)
+      argument(:repo, :string, allow_nil?: false)
 
-      manual Greenlight.GitHub.Actions.ListBranches
+      manual(Greenlight.GitHub.Actions.ListBranches)
     end
   end
 end

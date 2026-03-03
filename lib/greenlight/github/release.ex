@@ -7,17 +7,17 @@ defmodule Greenlight.GitHub.Release do
     domain: Greenlight.GitHub
 
   attributes do
-    attribute :tag_name, :string, primary_key?: true, allow_nil?: false, public?: true
-    attribute :name, :string, public?: true
-    attribute :html_url, :string, public?: true
+    attribute(:tag_name, :string, primary_key?: true, allow_nil?: false, public?: true)
+    attribute(:name, :string, public?: true)
+    attribute(:html_url, :string, public?: true)
   end
 
   actions do
     read :list do
-      argument :owner, :string, allow_nil?: false
-      argument :repo, :string, allow_nil?: false
+      argument(:owner, :string, allow_nil?: false)
+      argument(:repo, :string, allow_nil?: false)
 
-      manual Greenlight.GitHub.Actions.ListReleases
+      manual(Greenlight.GitHub.Actions.ListReleases)
     end
   end
 end
