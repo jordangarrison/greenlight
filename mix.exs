@@ -5,7 +5,7 @@ defmodule Greenlight.MixProject do
     [
       app: :greenlight,
       # x-release-please-start-version
-      version: "0.1.0",
+      version: "0.2.0",
       # x-release-please-end
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
