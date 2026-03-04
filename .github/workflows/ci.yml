@@ -67,6 +67,7 @@ jobs:
           set -euo pipefail
           docker load < ./result
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          docker tag ghcr.io/jordangarrison/greenlight:latest "ghcr.io/jordangarrison/greenlight:edge"
           docker tag ghcr.io/jordangarrison/greenlight:latest "ghcr.io/jordangarrison/greenlight:${SHORT_SHA}"
-          docker push ghcr.io/jordangarrison/greenlight:latest
+          docker push ghcr.io/jordangarrison/greenlight:edge
           docker push "ghcr.io/jordangarrison/greenlight:${SHORT_SHA}"
