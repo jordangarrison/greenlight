@@ -3,7 +3,7 @@ defmodule Greenlight.GitHub.WorkflowGraph do
   Transforms GitHub Actions data into Svelte Flow node/edge format.
   """
 
-  alias Greenlight.GitHub.Models
+  alias Greenlight.GitHub.{WorkflowRun, Job}
 
   def build_workflow_dag(workflow_runs) do
     nodes = Enum.map(workflow_runs, &workflow_to_node/1)
@@ -50,7 +50,7 @@ defmodule Greenlight.GitHub.WorkflowGraph do
     %{nodes: nodes, edges: edges}
   end
 
-  defp workflow_to_node(%Models.WorkflowRun{} = run) do
+  defp workflow_to_node(%WorkflowRun{} = run) do
     jobs_passed = Enum.count(run.jobs, &(&1.conclusion == :success))
     jobs_total = length(run.jobs)
 
@@ -77,7 +77,7 @@ defmodule Greenlight.GitHub.WorkflowGraph do
     }
   end
 
-  defp job_to_node(%Models.Job{} = job) do
+  defp job_to_node(%Job{} = job) do
     steps_completed = Enum.count(job.steps, &(&1.status == :completed))
     steps_total = length(job.steps)
 

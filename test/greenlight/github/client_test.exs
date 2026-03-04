@@ -117,14 +117,14 @@ defmodule Greenlight.GitHub.ClientTest do
     :ok
   end
 
-  test "list_workflow_runs/3 returns parsed workflow runs" do
+  test "list_workflow_runs/3 returns raw workflow run maps" do
     {:ok, runs} = Client.list_workflow_runs("owner", "repo", head_sha: "abc123")
-    assert [%Greenlight.GitHub.Models.WorkflowRun{id: 1, name: "CI"}] = runs
+    assert [%{"id" => 1, "name" => "CI"}] = runs
   end
 
-  test "list_jobs/3 returns parsed jobs for a run" do
+  test "list_jobs/3 returns raw job maps for a run" do
     {:ok, jobs} = Client.list_jobs("owner", "repo", 1)
-    assert [%Greenlight.GitHub.Models.Job{id: 100, name: "build"}] = jobs
+    assert [%{"id" => 100, "name" => "build"}] = jobs
   end
 
   test "list_org_repos/1 returns repo full names" do

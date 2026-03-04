@@ -9,7 +9,8 @@ import Config
 
 config :greenlight,
   generators: [timestamp_type: :utc_datetime],
-  ssr_enabled: true
+  ssr_enabled: true,
+  ash_domains: [Greenlight.GitHub]
 
 # Configure the endpoint
 config :greenlight, GreenlightWeb.Endpoint,

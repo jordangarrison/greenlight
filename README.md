@@ -15,6 +15,16 @@ A GitHub Actions workflow visualizer built with Phoenix LiveView. View your CI/C
 - **Repository browser** with workflow run history
 - **Pipeline view** per commit with dependency resolution from workflow YAML
 
+## Architecture
+
+Greenlight uses [Phoenix LiveView](https://hexdocs.pm/phoenix_live_view) for real-time UI and [Ash Framework](https://ash-hq.org/) as a declarative data layer for GitHub API resources.
+
+- **Ash Domain** (`Greenlight.GitHub`) provides a single code interface for all GitHub data access
+- **10 Ash Resources** model GitHub objects (WorkflowRun, Job, Step, Repository, Pull, Branch, Release, User, UserPR, UserCommit)
+- **ManualRead Actions** bridge the Ash domain to the GitHub REST API via a lightweight HTTP client
+- **GenServers** (Poller, UserInsightsServer) handle polling and caching, calling through the Ash domain
+- **LiveViews** subscribe to PubSub updates and render real-time DAG visualizations with Svelte Flow
+
 ## Prerequisites
 
 - [Elixir](https://elixir-lang.org/install.html) ~> 1.15

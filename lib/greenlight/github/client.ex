@@ -3,7 +3,6 @@ defmodule Greenlight.GitHub.Client do
   HTTP client for the GitHub REST API, using Req.
   """
 
-  alias Greenlight.GitHub.Models
   alias Greenlight.GitHub.ReqLogger
 
   @base_url "https://api.github.com"
@@ -33,8 +32,7 @@ defmodule Greenlight.GitHub.Client do
 
     case Req.get(new(), url: "/repos/#{owner}/#{repo}/actions/runs", params: params) do
       {:ok, %{status: 200, body: body}} ->
-        runs = Enum.map(body["workflow_runs"], &Models.WorkflowRun.from_api/1)
-        {:ok, runs}
+        {:ok, body["workflow_runs"]}
 
       {:ok, %{status: status, body: body}} ->
         {:error, {status, body}}
@@ -47,8 +45,7 @@ defmodule Greenlight.GitHub.Client do
   def list_jobs(owner, repo, run_id) do
     case Req.get(new(), url: "/repos/#{owner}/#{repo}/actions/runs/#{run_id}/jobs") do
       {:ok, %{status: 200, body: body}} ->
-        jobs = Enum.map(body["jobs"], &Models.Job.from_api/1)
-        {:ok, jobs}
+        {:ok, body["jobs"]}
 
       {:ok, %{status: status, body: body}} ->
         {:error, {status, body}}

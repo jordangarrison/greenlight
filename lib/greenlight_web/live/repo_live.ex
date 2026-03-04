@@ -1,7 +1,6 @@
 defmodule GreenlightWeb.RepoLive do
   use GreenlightWeb, :live_view
 
-  alias Greenlight.GitHub.Client
   alias Greenlight.WideEvent
 
   @impl true
@@ -40,26 +39,26 @@ defmodule GreenlightWeb.RepoLive do
     %{owner: owner, repo: repo} = socket.assigns
 
     pulls =
-      case Client.list_pulls(owner, repo) do
+      case Greenlight.GitHub.list_pulls(owner, repo) do
         {:ok, data} -> data
         {:error, _} -> []
       end
 
     branches =
-      case Client.list_branches(owner, repo) do
+      case Greenlight.GitHub.list_branches(owner, repo) do
         {:ok, data} -> data
         {:error, _} -> []
       end
 
     releases =
-      case Client.list_releases(owner, repo) do
+      case Greenlight.GitHub.list_releases(owner, repo) do
         {:ok, data} -> data
         {:error, _} -> []
       end
 
     # Fetch recent workflow runs for the "commits" tab
     commits =
-      case Client.list_workflow_runs(owner, repo, per_page: 20) do
+      case Greenlight.GitHub.list_workflow_runs(owner, repo, %{per_page: 20}) do
         {:ok, runs} ->
           runs
           |> Enum.uniq_by(& &1.head_sha)
