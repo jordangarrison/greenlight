@@ -140,10 +140,12 @@ defmodule Greenlight.GitHub.Client do
     end
   end
 
-  def search_user_prs(username) do
+  def search_user_prs(username, opts \\ %{}) do
+    per_page = Map.get(opts, :per_page, 50)
+
     case Req.get(new(),
            url: "/search/issues",
-           params: %{q: "author:#{username} type:pr sort:updated", per_page: 5}
+           params: %{q: "author:#{username} type:pr sort:updated", per_page: per_page}
          ) do
       {:ok, %{status: 200, body: body}} ->
         prs =
@@ -172,10 +174,12 @@ defmodule Greenlight.GitHub.Client do
     end
   end
 
-  def search_user_commits(username) do
+  def search_user_commits(username, opts \\ %{}) do
+    per_page = Map.get(opts, :per_page, 50)
+
     case Req.get(new(),
            url: "/search/commits",
-           params: %{q: "author:#{username} sort:author-date", per_page: 5}
+           params: %{q: "author:#{username} sort:author-date", per_page: per_page}
          ) do
       {:ok, %{status: 200, body: body}} ->
         commits =

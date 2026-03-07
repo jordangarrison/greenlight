@@ -7,7 +7,13 @@ defmodule Greenlight.GitHub.Actions.ListUserPRs do
   def read(query, _data_layer_query, _opts, _context) do
     username = query.arguments.username
 
-    case Client.search_user_prs(username) do
+    opts =
+      [:per_page]
+      |> Enum.map(fn key -> {key, Map.get(query.arguments, key)} end)
+      |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+      |> Map.new()
+
+    case Client.search_user_prs(username, opts) do
       {:ok, prs} ->
         ash_prs =
           Enum.map(prs, fn pr ->
