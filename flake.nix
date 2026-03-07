@@ -52,6 +52,12 @@
           shellHook = ''
             mix local.hex --if-missing --force
             mix local.rebar --if-missing --force
+
+            if [ ! -f _build/.setup_done ]; then
+              echo "First-time setup: running mix setup..."
+              mix setup
+              mkdir -p _build && touch _build/.setup_done
+            fi
           '';
         };
       }
