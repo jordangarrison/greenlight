@@ -15,8 +15,41 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           config-file: .release-please-config.json
           manifest-file: .release-please-manifest.json
+
+  publish:
+    name: Build & Push Release Image
+    needs: release
+    if: ${{ needs.release.outputs.release_created }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@v21
+      - uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build container image
+        run: nix build .#dockerImage
+      - name: Push release image
+        run: |
+          set -euo pipefail
+          docker load < ./result
+          VERSION="${{ needs.release.outputs.tag_name }}"
+          docker tag ghcr.io/jordangarrison/greenlight:latest "ghcr.io/jordangarrison/greenlight:${VERSION}"
+          docker push ghcr.io/jordangarrison/greenlight:latest
+          docker push "ghcr.io/jordangarrison/greenlight:${VERSION}"

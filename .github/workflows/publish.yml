@@ -1,8 +1,12 @@
 name: Publish Release
 
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.2.0)"
+        required: true
+        type: string
 
 jobs:
   publish:
@@ -13,6 +17,8 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag }}
       - uses: DeterminateSystems/nix-installer-action@v21
       - uses: DeterminateSystems/magic-nix-cache-action@v13
       - name: Log in to GHCR
@@ -27,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           docker load < ./result
-          VERSION="${GITHUB_REF_NAME}"
+          VERSION="${{ inputs.tag }}"
           docker tag ghcr.io/jordangarrison/greenlight:latest "ghcr.io/jordangarrison/greenlight:${VERSION}"
           docker push ghcr.io/jordangarrison/greenlight:latest
           docker push "ghcr.io/jordangarrison/greenlight:${VERSION}"
