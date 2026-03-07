@@ -5,15 +5,15 @@ defmodule GreenlightWeb.UserPullsLiveTest do
   alias Greenlight.Cache
 
   @prs Enum.map(1..15, fn i ->
-    %{
-      number: i,
-      title: "PR number #{i}",
-      state: "open",
-      html_url: "https://github.com/owner/repo/pull/#{i}",
-      updated_at: "2026-03-0#{min(i, 9)}T10:00:00Z",
-      repo: "owner/repo"
-    }
-  end)
+         %{
+           number: i,
+           title: "PR number #{i}",
+           state: "open",
+           html_url: "https://github.com/owner/repo/pull/#{i}",
+           updated_at: "2026-03-0#{min(i, 9)}T10:00:00Z",
+           repo: "owner/repo"
+         }
+       end)
 
   setup do
     Cache.init()

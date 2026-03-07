@@ -105,7 +105,11 @@ defmodule GreenlightWeb.UserPullsLive do
           </.link>
         </div>
 
-        <div :if={@total_pages > 1} id="pulls-pagination" class="flex items-center justify-center gap-4 mt-8">
+        <div
+          :if={@total_pages > 1}
+          id="pulls-pagination"
+          class="flex items-center justify-center gap-4 mt-8"
+        >
           <.link
             :if={@page > 1}
             patch={"/#{@username}/pulls?page=#{@page - 1}"}
