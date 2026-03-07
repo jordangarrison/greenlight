@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/jordangarrison/greenlight/compare/v0.2.0...v0.3.0) (2026-03-07)
+
+
+### Features
+
+* add paginated full views for user PRs and commits ([#13](https://github.com/jordangarrison/greenlight/issues/13)) ([2377eca](https://github.com/jordangarrison/greenlight/commit/2377eca55e689ee25076f4c5e6b3c968b55a4c51))
+
+
+### Bug Fixes
+
+* **ci:** move docker publish into release-please workflow ([#15](https://github.com/jordangarrison/greenlight/issues/15)) ([5634121](https://github.com/jordangarrison/greenlight/commit/563412138ee9d0086224ae4dbd4e457302084ca2))
+
 ## [0.2.0](https://github.com/jordangarrison/greenlight/compare/v0.1.0...v0.2.0) (2026-03-04)
 
 
