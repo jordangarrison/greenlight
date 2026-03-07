@@ -7,7 +7,13 @@ defmodule Greenlight.GitHub.Actions.ListUserCommits do
   def read(query, _data_layer_query, _opts, _context) do
     username = query.arguments.username
 
-    case Client.search_user_commits(username) do
+    opts =
+      [:per_page]
+      |> Enum.map(fn key -> {key, Map.get(query.arguments, key)} end)
+      |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+      |> Map.new()
+
+    case Client.search_user_commits(username, opts) do
       {:ok, commits} ->
         ash_commits =
           Enum.map(commits, fn c ->

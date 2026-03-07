@@ -23,6 +23,8 @@ defmodule GreenlightWeb.Router do
     live "/repos/:owner/:repo/commit/:sha", PipelineLive
     live "/repos/:owner/:repo/pull/:number", PipelineLive
     live "/repos/:owner/:repo/release/:tag", PipelineLive
+    live "/:username/pulls", UserPullsLive
+    live "/:username/commits", UserCommitsLive
   end
 
   # Other scopes may use custom stacks.

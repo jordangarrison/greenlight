@@ -66,8 +66,11 @@ defmodule Greenlight.GitHub.UserInsightsServer do
   defp fetch_user_insights do
     case Greenlight.GitHub.get_authenticated_user() do
       {:ok, [user | _]} ->
-        prs_task = Task.async(fn -> Greenlight.GitHub.list_user_prs(user.login) end)
-        commits_task = Task.async(fn -> Greenlight.GitHub.list_user_commits(user.login) end)
+        prs_task =
+          Task.async(fn -> Greenlight.GitHub.list_user_prs(user.login, %{per_page: 50}) end)
+
+        commits_task =
+          Task.async(fn -> Greenlight.GitHub.list_user_commits(user.login, %{per_page: 50}) end)
 
         prs =
           case Task.await(prs_task) do

@@ -17,6 +17,7 @@ defmodule Greenlight.GitHub.UserCommit do
   actions do
     read :list do
       argument(:username, :string, allow_nil?: false)
+      argument(:per_page, :integer)
 
       manual(Greenlight.GitHub.Actions.ListUserCommits)
     end

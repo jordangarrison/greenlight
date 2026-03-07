@@ -126,15 +126,23 @@ defmodule GreenlightWeb.DashboardLive do
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <%!-- Recent PRs column --%>
               <div>
-                <h3 class="text-sm font-bold uppercase tracking-wider text-[var(--gl-accent)] mb-3 flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 bg-[var(--gl-accent)]" /> Recent Pull Requests
-                </h3>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-bold uppercase tracking-wider text-[var(--gl-accent)] flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-[var(--gl-accent)]" /> Recent Pull Requests
+                  </h3>
+                  <.link
+                    navigate={"/#{@user.login}/pulls"}
+                    class="text-xs text-[var(--gl-text-muted)] hover:text-[var(--gl-accent)] transition-colors uppercase tracking-wider"
+                  >
+                    View all &rarr;
+                  </.link>
+                </div>
                 <div :if={@user_prs == []} class="text-sm text-[var(--gl-text-muted)] py-4">
                   No recent pull requests
                 </div>
                 <div class="space-y-2">
                   <.link
-                    :for={pr <- @user_prs}
+                    :for={pr <- Enum.take(@user_prs, 5)}
                     navigate={"/repos/#{pr.repo}/pull/#{pr.number}"}
                     class="nb-card-muted block p-3 group"
                   >
@@ -166,15 +174,23 @@ defmodule GreenlightWeb.DashboardLive do
 
               <%!-- Recent Commits column --%>
               <div>
-                <h3 class="text-sm font-bold uppercase tracking-wider text-[var(--gl-accent)] mb-3 flex items-center gap-2">
-                  <span class="w-1.5 h-1.5 bg-[var(--gl-accent)]" /> Recent Commits
-                </h3>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-bold uppercase tracking-wider text-[var(--gl-accent)] flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-[var(--gl-accent)]" /> Recent Commits
+                  </h3>
+                  <.link
+                    navigate={"/#{@user.login}/commits"}
+                    class="text-xs text-[var(--gl-text-muted)] hover:text-[var(--gl-accent)] transition-colors uppercase tracking-wider"
+                  >
+                    View all &rarr;
+                  </.link>
+                </div>
                 <div :if={@user_commits == []} class="text-sm text-[var(--gl-text-muted)] py-4">
                   No recent commits
                 </div>
                 <div class="space-y-2">
                   <.link
-                    :for={commit <- @user_commits}
+                    :for={commit <- Enum.take(@user_commits, 5)}
                     navigate={"/repos/#{commit.repo}/commit/#{commit.sha}"}
                     class="nb-card-muted block p-3 group"
                   >
